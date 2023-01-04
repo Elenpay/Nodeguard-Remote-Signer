@@ -13,13 +13,13 @@ To enable mode #1 set env var as follows `ENABLE_REMOTE_SIGNER = false`, otherwi
 "AWS_SECRET_ACCESS_KEY": "********",
 "AWS_REGION": "eu-west-1",
 "AWS_KMS_KEY_ID": "mrk-cec3e3ef59bc4616a6f44da60bfea0ba", 
-"FM_SIGNER_ENDPOINT": "https://*.lambda-url.eu-west-1.on.aws/"
+"REMOTE_SIGNER_ENDPOINT": "https://*.lambda-url.eu-west-1.on.aws/"
 ```
 They are detailed as follows:
 - AWS_ACCESS_KEY_ID:  IAM-based user account id used to auth against AWS lambda
 - AWS_SECRET_ACCESS_KEY: IAM-based user secret
 - AWS_REGION: the region code of the AWS deployed lambda function
-- FM_SIGNER_ENDPOINT: AWS Function url endpoint, check https://docs.aws.amazon.com/lambda/latest/dg/lambda-urls.html
+- REMOTE_SIGNER_ENDPOINT: AWS Function url endpoint, check https://docs.aws.amazon.com/lambda/latest/dg/lambda-urls.html
 
 ### Invoking the lambda function
 

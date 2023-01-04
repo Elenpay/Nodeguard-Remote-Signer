@@ -1,6 +1,6 @@
-FROM public.ecr.aws/lambda/dotnet:6 AS base
+FROM --platform=linux/amd64 public.ecr.aws/lambda/dotnet:6 AS base
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim as build
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim as build
 WORKDIR /src
 COPY ["RemoteSigner.csproj", "RemoteSigner/"]
 RUN dotnet restore "RemoteSigner/RemoteSigner.csproj"

@@ -54,7 +54,12 @@ public class Function
             var requestBody = JsonSerializer.Deserialize<SignPSBTRequest>(request.Body);
             if (requestBody == null) throw new ArgumentNullException(nameof(requestBody), "Request body not found");
 
+#if DEBUG
             var kmsClient = new AmazonKeyManagementServiceClient(new StoredProfileAWSCredentials("default"), RegionEndpoint.EUCentral1);
+#else
+            var kmsClient = new AmazonKeyManagementServiceClient();
+#endif
+            
 
             var network = requestBody.Network.ToUpper() switch
             {
@@ -73,8 +78,7 @@ public class Function
                     //We search for a fingerprint that can be used as a key for getting the config (env-var)
                     //Ideally, only fingerprints of the FundsManager signer wallet are set as env vars
                     var derivationPath = psbtInput.HDKeyPaths.Values.SingleOrDefault(x =>
-                        Environment.GetEnvironmentVariable(x.MasterFingerprint.ToString()) != null);
-
+                        Environment.GetEnvironmentVariable($"MF_{x.MasterFingerprint.ToString()}") != null);
                     if (derivationPath == null)
                     {
                         throw new ArgumentException(
@@ -84,7 +88,9 @@ public class Function
 
                     var inputPSBTMasterFingerPrint = derivationPath.MasterFingerprint;
 
-                    var configJson = Environment.GetEnvironmentVariable(inputPSBTMasterFingerPrint.ToString());
+                    var masterFingerPrint = $"MF_{inputPSBTMasterFingerPrint}";
+                    var configJson = Environment.GetEnvironmentVariable(masterFingerPrint);
+
 
                     if (configJson != null)
                     {
@@ -166,7 +172,7 @@ public class Function
             await Console.Error.WriteLineAsync(e.Message);
             response = new APIGatewayHttpApiV2ProxyResponse
             {
-                Body = e.Message,
+                Body = e.StackTrace,
                 IsBase64Encoded = false,
                 StatusCode = 500
             };
