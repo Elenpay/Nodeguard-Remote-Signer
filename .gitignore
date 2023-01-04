@@ -1,0 +1,14 @@
+docker/bin/
+.vs/
+.idea/
+docker/obj/
+**/bin/
+**/obj/
+FundsManager.sln.DotSettings.user
+src/FundsManager.csproj.user
+
+
+RemoteSigner.Tests/bin/
+RemoteSigner.Tests/obj/
+RemoteSigner/bin/
+RemoteSigner/obj/

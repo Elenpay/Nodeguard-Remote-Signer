@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteSigner", "RemoteSigner\RemoteSigner.csproj", "{CAC41215-D95B-4190-8DAD-C115DAE07627}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteSigner.Tests", "RemoteSigner.Tests\RemoteSigner.Tests.csproj", "{81B1A3F0-BAC6-4FB6-954A-DC8AC78E5C8A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CAC41215-D95B-4190-8DAD-C115DAE07627}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAC41215-D95B-4190-8DAD-C115DAE07627}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAC41215-D95B-4190-8DAD-C115DAE07627}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAC41215-D95B-4190-8DAD-C115DAE07627}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81B1A3F0-BAC6-4FB6-954A-DC8AC78E5C8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81B1A3F0-BAC6-4FB6-954A-DC8AC78E5C8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81B1A3F0-BAC6-4FB6-954A-DC8AC78E5C8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81B1A3F0-BAC6-4FB6-954A-DC8AC78E5C8A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
