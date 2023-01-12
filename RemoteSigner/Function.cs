@@ -65,6 +65,7 @@ public class Function
             {
                 "REGTEST" => Network.RegTest,
                 "MAINNET" => Network.Main,
+                "MAIN" => Network.Main, //NBitcoin uses "Main" as its network name for mainnet
                 "TESTNET" => Network.TestNet,
                 _ => throw new ArgumentException("Network not recognized")
             };
