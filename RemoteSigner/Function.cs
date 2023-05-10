@@ -41,11 +41,12 @@ public class Function
 {
     /// <summary>
     /// A lambda function that takes a psbt and signs it
-    /// </summary>
+    /// </summary>MF
     /// <param name="request"></param>
     /// <param name="context"></param>
     /// <returns></returns>
-    public async Task<APIGatewayHttpApiV2ProxyResponse> FunctionHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    public async Task<APIGatewayHttpApiV2ProxyResponse> FunctionHandler(APIGatewayHttpApiV2ProxyRequest request,
+        ILambdaContext context)
     {
         var response = new APIGatewayHttpApiV2ProxyResponse();
 
@@ -55,11 +56,12 @@ public class Function
             if (requestBody == null) throw new ArgumentNullException(nameof(requestBody), "Request body not found");
 
 #if DEBUG
-            var kmsClient = new AmazonKeyManagementServiceClient(new StoredProfileAWSCredentials("default"), RegionEndpoint.EUCentral1);
+            var kmsClient = new AmazonKeyManagementServiceClient(new StoredProfileAWSCredentials("default"),
+                RegionEndpoint.EUCentral1);
 #else
             var kmsClient = new AmazonKeyManagementServiceClient();
 #endif
-            
+
 
             var network = requestBody.Network.ToUpper() switch
             {
@@ -69,8 +71,8 @@ public class Function
                 "TESTNET" => Network.TestNet,
                 _ => throw new ArgumentException("Network not recognized")
             };
-
-            var result = new SignPSBTResponse(null);
+            
+            Console.WriteLine($"Network: {network}");
 
             if (PSBT.TryParse(requestBody.Psbt, network, out var parsedPSBT))
             {
@@ -97,6 +99,13 @@ public class Function
                     {
                         var config = JsonSerializer.Deserialize<SignPSBTConfig>(configJson);
 
+                        if (config == null)
+                        {
+                            var message = "The config could not be deserialized";
+                            await Console.Error.WriteLineAsync(message);
+                            throw new ArgumentException(message, nameof(config));
+                        }
+
                         var decryptedSeed = await kmsClient.DecryptAsync(new DecryptRequest
                         {
                             CiphertextBlob = new MemoryStream(Convert.FromBase64String(config.EncryptedSeedphrase)),
@@ -106,7 +115,9 @@ public class Function
 
                         if (decryptedSeed == null)
                         {
-                            throw new ArgumentException("The seedphrase could not be decrypted / found", nameof(decryptedSeed));
+                            var message = "The seedphrase could not be decrypted / found";
+                            
+                            throw new ArgumentException(message, nameof(decryptedSeed));
                         }
 
                         var array = decryptedSeed.Plaintext.ToArray();
@@ -116,6 +127,10 @@ public class Function
 
                         var extKey = new Mnemonic(seed).DeriveExtKey();
                         var bitcoinExtKey = extKey.GetWif(network);
+
+
+                        //Validate global xpubs
+                        await ValidateXPub(parsedPSBT, bitcoinExtKey);
 
                         var fingerPrint = bitcoinExtKey.GetPublicKey().GetHDFingerPrint();
 
@@ -135,11 +150,16 @@ public class Function
 
                             Console.WriteLine($"Enforced sighash: {psbtInput.SighashType:G}");
                         }
-
+                        
+                        
                         var key = bitcoinExtKey
                             .Derive(derivationPath.KeyPath)
                             .PrivateKey;
-                        psbtInput.Sign(key);
+                        
+                        //Log
+                        Console.WriteLine($"Signing PSBT input:{psbtInput.Index} with master fingerprint: {fingerPrint} on derivation path: {derivationPath.KeyPath} with pubkey: {key.PubKey.ToHex()}");
+
+                        parsedPSBT.SignWithKeys(key);
 
                         //We check that the partial signatures number has changed, otherwise finalize inmediately
                         var partialSigsCountAfterSignature =
@@ -149,14 +169,14 @@ public class Function
                             partialSigsCountAfterSignature <= partialSigsCount)
                         {
                             var invalidNoOfPartialSignatures =
-                                $"Invalid expected number of partial signatures after signing the PSBT";
-
+                                $"Invalid expected number of partial signatures after signing the PSBT, expected: {partialSigsCount + 1}, actual: {partialSigsCountAfterSignature}";
+                            
                             throw new ArgumentException(
                                 invalidNoOfPartialSignatures);
                         }
                     }
 
-                    result = new SignPSBTResponse(parsedPSBT.ToBase64());
+                    var result = new SignPSBTResponse(parsedPSBT.ToBase64());
 
                     response = new APIGatewayHttpApiV2ProxyResponse()
                     {
@@ -166,6 +186,7 @@ public class Function
                     };
                 }
             }
+
             Console.WriteLine($"Signing request finished");
         }
         catch (Exception e)
@@ -173,13 +194,51 @@ public class Function
             await Console.Error.WriteLineAsync(e.Message);
             response = new APIGatewayHttpApiV2ProxyResponse
             {
-                Body = e.StackTrace,
+                Body = e.Message,
                 IsBase64Encoded = false,
                 StatusCode = 500
             };
         }
 
         return response;
+    }
+
+    /// <summary>
+    /// Checks that the global xpubs psbt section contains the expected xpub
+    /// </summary>
+    /// <param name="psbt"></param>
+    /// <param name="masterXpriv"></param>
+    public async Task ValidateXPub(PSBT psbt, BitcoinExtKey masterXpriv)
+    {
+        if (psbt == null) throw new ArgumentNullException(nameof(psbt));
+        if (masterXpriv == null) throw new ArgumentNullException(nameof(masterXpriv));
+
+        //Get the master fingerprint
+
+        var fingerprint = masterXpriv.GetPublicKey().GetHDFingerPrint();
+
+        //We search for the fingerprint in the global xpubs
+        var entryExists = psbt.GlobalXPubs.Any(x => x.Value.MasterFingerprint == fingerprint);
+
+        if (!entryExists)
+        {
+            var message =
+                $"The PSBT does not contain the expected wallet xpub, the fingerprint {fingerprint} is not present in the global xpubs";
+            throw new ArgumentException(message, nameof(fingerprint));
+        }
+
+        var xpubEntry = psbt.GlobalXPubs.Single(x => x.Value.MasterFingerprint == fingerprint);
+
+        //Generate bitcoinextpubkey
+        var bitcoinExtPubKey = masterXpriv.Derive(xpubEntry.Value.KeyPath).Neuter();
+
+
+        if (xpubEntry.Key != bitcoinExtPubKey)
+        {
+            var message =
+                $"The PSBT does not contain the expected wallet xpub, the xpub does not match the expected one, received: {xpubEntry.Key}, expected: {bitcoinExtPubKey} ";
+            throw new ArgumentException(message, nameof(bitcoinExtPubKey));
+        }
     }
 
     /// <summary>
@@ -229,4 +288,5 @@ public class Function
 }
 
 public record SignPSBTRequest(string Psbt, SigHash? EnforcedSighash, string Network);
+
 public record SignPSBTResponse(string? Psbt);
