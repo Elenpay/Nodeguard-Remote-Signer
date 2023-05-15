@@ -164,12 +164,15 @@ public class Function
                         //We check that the partial signatures number has changed, otherwise finalize inmediately
                         var partialSigsCountAfterSignature =
                             parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count);
-
+                        
+                        //We should have added a signature for each input, plus already existing signatures
+                        var expectedPartialSigs = partialSigsCount + parsedPSBT.Inputs.Count;
+                        
                         if (partialSigsCountAfterSignature == 0 ||
-                            partialSigsCountAfterSignature != parsedPSBT.Inputs.Count)
+                            partialSigsCountAfterSignature != expectedPartialSigs)
                         {
                             var invalidNoOfPartialSignatures =
-                                $"Invalid expected number of partial signatures after signing the PSBT, expected: {parsedPSBT.Inputs.Count}, actual: {partialSigsCountAfterSignature}";
+                                $"Invalid expected number of partial signatures after signing the PSBT, expected: {expectedPartialSigs}, actual: {partialSigsCountAfterSignature}";
                             
                             throw new ArgumentException(
                                 invalidNoOfPartialSignatures);
