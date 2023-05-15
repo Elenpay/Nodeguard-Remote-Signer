@@ -68,6 +68,8 @@ public class Function
 
             if (PSBT.TryParse(requestBody.Psbt, network, out var parsedPSBT))
             {
+                parsedPSBT.AssertSanity();
+                
                 foreach (var psbtInput in parsedPSBT.Inputs)
                 {
                     //We search for a fingerprint that can be used as a key for getting the config (env-var)
