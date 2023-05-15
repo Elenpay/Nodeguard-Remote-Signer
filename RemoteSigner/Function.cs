@@ -166,10 +166,10 @@ public class Function
                             parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count);
 
                         if (partialSigsCountAfterSignature == 0 ||
-                            partialSigsCountAfterSignature <= partialSigsCount)
+                            partialSigsCountAfterSignature != parsedPSBT.Inputs.Count)
                         {
                             var invalidNoOfPartialSignatures =
-                                $"Invalid expected number of partial signatures after signing the PSBT, expected: {partialSigsCount + 1}, actual: {partialSigsCountAfterSignature}";
+                                $"Invalid expected number of partial signatures after signing the PSBT, expected: {parsedPSBT.Inputs.Count}, actual: {partialSigsCountAfterSignature}";
                             
                             throw new ArgumentException(
                                 invalidNoOfPartialSignatures);
