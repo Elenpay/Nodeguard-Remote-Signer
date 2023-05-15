@@ -40,7 +40,7 @@ public class SignPSBTConfig
 public class Function
 {
     /// <summary>
-    /// A lambda function that takes a psbt and signs it
+    /// A lambda function that takes a psbt and signs it, it it assumed that the psbt inputs come from the same wallet
     /// </summary>MF
     /// <param name="request"></param>
     /// <param name="context"></param>
@@ -62,16 +62,8 @@ public class Function
             var kmsClient = new AmazonKeyManagementServiceClient();
 #endif
 
+            var network = ParseNetwork(requestBody.Network);
 
-            var network = requestBody.Network.ToUpper() switch
-            {
-                "REGTEST" => Network.RegTest,
-                "MAINNET" => Network.Main,
-                "MAIN" => Network.Main, //NBitcoin uses "Main" as its network name for mainnet
-                "TESTNET" => Network.TestNet,
-                _ => throw new ArgumentException("Network not recognized")
-            };
-            
             Console.WriteLine($"Network: {network}");
 
             if (PSBT.TryParse(requestBody.Psbt, network, out var parsedPSBT))
@@ -116,7 +108,7 @@ public class Function
                         if (decryptedSeed == null)
                         {
                             var message = "The seedphrase could not be decrypted / found";
-                            
+
                             throw new ArgumentException(message, nameof(decryptedSeed));
                         }
 
@@ -142,7 +134,6 @@ public class Function
                             throw new ArgumentException(mismatchingFingerprint, nameof(fingerPrint));
                         }
 
-                        var partialSigsCount = parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count);
                         //We can enforce the sighash for all the inputs in the request in case the PSBT was not modified or serialized correctly.
                         if (requestBody.EnforcedSighash != null)
                         {
@@ -150,45 +141,53 @@ public class Function
 
                             Console.WriteLine($"Enforced sighash: {psbtInput.SighashType:G}");
                         }
-                        
-                        
+
+
                         var key = bitcoinExtKey
                             .Derive(derivationPath.KeyPath)
                             .PrivateKey;
-                        
-                        //Log
-                        Console.WriteLine($"Signing PSBT input:{psbtInput.Index} with master fingerprint: {fingerPrint} on derivation path: {derivationPath.KeyPath} with pubkey: {key.PubKey.ToHex()}");
 
-                        parsedPSBT.SignWithKeys(key);
+                        //Log
+                        Console.WriteLine(
+                            $"Signing PSBT input:{psbtInput.Index} with master fingerprint: {fingerPrint} on derivation path: {derivationPath.KeyPath} with pubkey: {key.PubKey.ToHex()}");
+                        
+                        var partialSigsCountBeforeSigning = psbtInput.PartialSigs.Count(x=> x.Key == key.PubKey);
+
+                        //We sign the input
+                        psbtInput.Sign(key);
 
                         //We check that the partial signatures number has changed, otherwise finalize inmediately
                         var partialSigsCountAfterSignature =
-                            parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count);
-                        
+                            parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count(x=> x.Key == key.PubKey));
+
                         //We should have added a signature for each input, plus already existing signatures
-                        var expectedPartialSigs = partialSigsCount + parsedPSBT.Inputs.Count;
-                        
+                        var expectedPartialSigs = partialSigsCountBeforeSigning + 1;
+
                         if (partialSigsCountAfterSignature == 0 ||
                             partialSigsCountAfterSignature != expectedPartialSigs)
                         {
                             var invalidNoOfPartialSignatures =
                                 $"Invalid expected number of partial signatures after signing the PSBT, expected: {expectedPartialSigs}, actual: {partialSigsCountAfterSignature}";
-                            
+
                             throw new ArgumentException(
                                 invalidNoOfPartialSignatures);
                         }
                     }
-
-                    var result = new SignPSBTResponse(parsedPSBT.ToBase64());
-
-                    response = new APIGatewayHttpApiV2ProxyResponse()
-                    {
-                        Body = JsonSerializer.Serialize(result),
-                        IsBase64Encoded = false,
-                        StatusCode = 200
-                    };
                 }
+
+                //We check that the PSBT is still valid after signing
+                parsedPSBT.AssertSanity();
+
+                var result = new SignPSBTResponse(parsedPSBT.ToBase64());
+
+                response = new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = JsonSerializer.Serialize(result),
+                    IsBase64Encoded = false,
+                    StatusCode = 200
+                };
             }
+
 
             Console.WriteLine($"Signing request finished");
         }
@@ -204,6 +203,19 @@ public class Function
         }
 
         return response;
+    }
+
+    public static Network ParseNetwork(string upperCaseNetwork)
+    {
+        upperCaseNetwork = upperCaseNetwork.ToUpperInvariant();
+        return upperCaseNetwork switch
+        {
+            "REGTEST" => Network.RegTest,
+            "MAINNET" => Network.Main,
+            "MAIN" => Network.Main, //NBitcoin uses "Main" as its network name for mainnet
+            "TESTNET" => Network.TestNet,
+            _ => throw new ArgumentException("Network not recognized")
+        };
     }
 
     /// <summary>

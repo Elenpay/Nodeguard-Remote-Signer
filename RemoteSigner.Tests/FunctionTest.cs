@@ -31,19 +31,23 @@ public class FunctionTest : IDisposable
     {
         Environment.SetEnvironmentVariable("MF_ed0210c8", null);
     }
-
-    [Fact]
-    public async Task SignTest()
+    
+    [Theory]
+    [InlineData("cHNidP8BAF4BAAAAAcbYkt1iwOa6IsI8lrNx1DWQCCg/y7+fQTlfEhDIKOWVAAAAAAD/////AeiN9QUAAAAAIgAgg+aofANl6wKKByTgFl5yBnqUK8f7sn4ULhAAIJb1C0cAAAAATwEENYfPAy8RJCyAAAAB/DvuQjoBjOttImoGYyiO0Pte4PqdeQqzcNAw4Ecw5sgDgI4uHNSCvdBxlpQ8WoEz0WmvhgIra7A4F3FkTsB0RNcQH8zk3jAAAIABAACAAQAAgE8BBDWHzwNWrAP0gAAAAfkIrkpmsP+hqxS1WvDOSPKnAiXLkBCQLWkBr5C5Po+BAlGvFeBbuLfqwYlbP19H/+/s2DIaAu8iKY+J0KIDffBgEGDzoLMwAACAAQAAgAEAAIBPAQQ1h88DfblGjYAAAAH1InDHaHo6+zUe9PG5owwQ87bTkhcGg66pSIwTmhHJmAMiI4UjOOpn+/2Nw1KrJiXnmid2RiEja/HAITCQ00ienxDtAhDIMAAAgAEAAIABAACAAAEBK2SQ9QUAAAAAIgAguNLINpkV//IIFd1ti2ig15+6mPOhNWykV0mwsneO9FciAgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BkcwRAIgPcwj6yaA6RZn+4YSHi4S1WE5ziHEt0IZO5KqDE5B0zMCID6cSLumR2AbgwqMTI3/Z3szEyMQauxtzvBpY8Z4oSp8AgEDBAIAAAABBWlSIQMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BiEDgTQLkhqca3brBTunNmjIsb4WEsFryTwd3BH/ZPS4KkohA91uD9EYRlzIBT6yNU2S2L/wvOA0/em4ocaM//veOtN2U64iBgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BhgfzOTeMAAAgAEAAIABAACAAQAAAAAAAAAiBgOBNAuSGpxrdusFO6c2aMixvhYSwWvJPB3cEf9k9LgqShjtAhDIMAAAgAEAAIABAACAAQAAAAAAAAAiBgPdbg/RGEZcyAU+sjVNkti/8LzgNP3puKHGjP/73jrTdhhg86CzMAAAgAEAAIABAACAAQAAAAAAAAAAAA==", SigHash.All, "Regtest")]
+    [InlineData("cHNidP8BAF4BAAAAAcbYkt1iwOa6IsI8lrNx1DWQCCg/y7+fQTlfEhDIKOWVAAAAAAD/////AeiN9QUAAAAAIgAgg+aofANl6wKKByTgFl5yBnqUK8f7sn4ULhAAIJb1C0cAAAAATwEENYfPAy8RJCyAAAAB/DvuQjoBjOttImoGYyiO0Pte4PqdeQqzcNAw4Ecw5sgDgI4uHNSCvdBxlpQ8WoEz0WmvhgIra7A4F3FkTsB0RNcQH8zk3jAAAIABAACAAQAAgE8BBDWHzwNWrAP0gAAAAfkIrkpmsP+hqxS1WvDOSPKnAiXLkBCQLWkBr5C5Po+BAlGvFeBbuLfqwYlbP19H/+/s2DIaAu8iKY+J0KIDffBgEGDzoLMwAACAAQAAgAEAAIBPAQQ1h88DfblGjYAAAAH1InDHaHo6+zUe9PG5owwQ87bTkhcGg66pSIwTmhHJmAMiI4UjOOpn+/2Nw1KrJiXnmid2RiEja/HAITCQ00ienxDtAhDIMAAAgAEAAIABAACAAAEBK2SQ9QUAAAAAIgAguNLINpkV//IIFd1ti2ig15+6mPOhNWykV0mwsneO9FciAgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BkcwRAIgPcwj6yaA6RZn+4YSHi4S1WE5ziHEt0IZO5KqDE5B0zMCID6cSLumR2AbgwqMTI3/Z3szEyMQauxtzvBpY8Z4oSp8AgEDBAIAAAABBWlSIQMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BiEDgTQLkhqca3brBTunNmjIsb4WEsFryTwd3BH/ZPS4KkohA91uD9EYRlzIBT6yNU2S2L/wvOA0/em4ocaM//veOtN2U64iBgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BhgfzOTeMAAAgAEAAIABAACAAQAAAAAAAAAiBgOBNAuSGpxrdusFO6c2aMixvhYSwWvJPB3cEf9k9LgqShjtAhDIMAAAgAEAAIABAACAAQAAAAAAAAAiBgPdbg/RGEZcyAU+sjVNkti/8LzgNP3puKHGjP/73jrTdhhg86CzMAAAgAEAAIABAACAAQAAAAAAAAAAAA==", SigHash.None, "Regtest")]
+    [InlineData("cHNidP8BAKQBAAAAAwXAGAr1uq/i06r+EW2SjFMKQp3Pg0q+eJcqQ9iWKLrMAAAAAAD/////E9fa5RGuwTHL6xLgYpdDDXz2piFg7F9UWPZXyAZdM8kAAAAAAP////9YszwapNpRRrI7LFJglswjr9SLkao+ywZq/AtjZMDChAAAAAAA/////wGsJgMGAAAAABYAFJO3OqgJq4Mr3qWsDV1YUNj0aDHQAAAAAE8BBDWHzwN9uUaNAAAAAIDetxqi8U7tfzci9EleGtB59Z/A84PlsnvZ229emSEgA6/rPqXCpw3EqihylkpeL/EXKvNGahv+0Dm2JmVJf8VGEO0CEMgwAACAAQAAgAAAAAAAAQEfjGkeAAAAAAAWABQCmza03sKejExNXjBVHR8UyJJWpgEDBAIAAAAiBgIUCFqogmf/kpcaV+42XlzRzx4OWdqxWDesHZkVuK70sBjtAhDIMAAAgAEAAIAAAAAAAAAAAD0AAAAAAQEfyFrXBQAAAAAWABR9cTsoys8smwP2qmjSQM06tKj4fwEDBAIAAAAiBgPzpHxMZtZ1f3rW4L0yyV4gPS45MGMDooXHpvIhAGbvtBjtAhDIMAAAgAEAAIAAAAAAAQAAAC8AAAAAAQEfMGYNAAAAAAAWABRmqBq5qDk2/37GDEq0zM5HXigXjwEDBAIAAAAiBgJr4vl26F2PI9F3JT63vX1qltyDoaAOZ/D212UNJ3u1XhjtAhDIMAAAgAEAAIAAAAAAAQAAADQAAAAAAA==", SigHash.All, "Regtest")]
+    [InlineData("cHNidP8BAKQBAAAAAwXAGAr1uq/i06r+EW2SjFMKQp3Pg0q+eJcqQ9iWKLrMAAAAAAD/////E9fa5RGuwTHL6xLgYpdDDXz2piFg7F9UWPZXyAZdM8kAAAAAAP////9YszwapNpRRrI7LFJglswjr9SLkao+ywZq/AtjZMDChAAAAAAA/////wGsJgMGAAAAABYAFJO3OqgJq4Mr3qWsDV1YUNj0aDHQAAAAAE8BBDWHzwN9uUaNAAAAAIDetxqi8U7tfzci9EleGtB59Z/A84PlsnvZ229emSEgA6/rPqXCpw3EqihylkpeL/EXKvNGahv+0Dm2JmVJf8VGEO0CEMgwAACAAQAAgAAAAAAAAQEfjGkeAAAAAAAWABQCmza03sKejExNXjBVHR8UyJJWpgEDBAIAAAAiBgIUCFqogmf/kpcaV+42XlzRzx4OWdqxWDesHZkVuK70sBjtAhDIMAAAgAEAAIAAAAAAAAAAAD0AAAAAAQEfyFrXBQAAAAAWABR9cTsoys8smwP2qmjSQM06tKj4fwEDBAIAAAAiBgPzpHxMZtZ1f3rW4L0yyV4gPS45MGMDooXHpvIhAGbvtBjtAhDIMAAAgAEAAIAAAAAAAQAAAC8AAAAAAQEfMGYNAAAAAAAWABRmqBq5qDk2/37GDEq0zM5HXigXjwEDBAIAAAAiBgJr4vl26F2PI9F3JT63vX1qltyDoaAOZ/D212UNJ3u1XhjtAhDIMAAAgAEAAIAAAAAAAQAAADQAAAAAAA==", SigHash.None, "Regtest")]
+    public async Task SignTest(string psbt, SigHash sigHash, string network)
     {
         //Arrange
         var function = new Function();
         var context = new TestLambdaContext();
 
+        var originalPSBT = PSBT.Parse(psbt, Function.ParseNetwork(network));
 
-        var input = new SignPSBTRequest(
-            "cHNidP8BAF4BAAAAAcbYkt1iwOa6IsI8lrNx1DWQCCg/y7+fQTlfEhDIKOWVAAAAAAD/////AeiN9QUAAAAAIgAgg+aofANl6wKKByTgFl5yBnqUK8f7sn4ULhAAIJb1C0cAAAAATwEENYfPAy8RJCyAAAAB/DvuQjoBjOttImoGYyiO0Pte4PqdeQqzcNAw4Ecw5sgDgI4uHNSCvdBxlpQ8WoEz0WmvhgIra7A4F3FkTsB0RNcQH8zk3jAAAIABAACAAQAAgE8BBDWHzwNWrAP0gAAAAfkIrkpmsP+hqxS1WvDOSPKnAiXLkBCQLWkBr5C5Po+BAlGvFeBbuLfqwYlbP19H/+/s2DIaAu8iKY+J0KIDffBgEGDzoLMwAACAAQAAgAEAAIBPAQQ1h88DfblGjYAAAAH1InDHaHo6+zUe9PG5owwQ87bTkhcGg66pSIwTmhHJmAMiI4UjOOpn+/2Nw1KrJiXnmid2RiEja/HAITCQ00ienxDtAhDIMAAAgAEAAIABAACAAAEBK2SQ9QUAAAAAIgAguNLINpkV//IIFd1ti2ig15+6mPOhNWykV0mwsneO9FciAgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BkcwRAIgPcwj6yaA6RZn+4YSHi4S1WE5ziHEt0IZO5KqDE5B0zMCID6cSLumR2AbgwqMTI3/Z3szEyMQauxtzvBpY8Z4oSp8AgEDBAIAAAABBWlSIQMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BiEDgTQLkhqca3brBTunNmjIsb4WEsFryTwd3BH/ZPS4KkohA91uD9EYRlzIBT6yNU2S2L/wvOA0/em4ocaM//veOtN2U64iBgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BhgfzOTeMAAAgAEAAIABAACAAQAAAAAAAAAiBgOBNAuSGpxrdusFO6c2aMixvhYSwWvJPB3cEf9k9LgqShjtAhDIMAAAgAEAAIABAACAAQAAAAAAAAAiBgPdbg/RGEZcyAU+sjVNkti/8LzgNP3puKHGjP/73jrTdhhg86CzMAAAgAEAAIABAACAAQAAAAAAAAAAAA==",
-            SigHash.All,
-            "Regtest");
+        var input = new SignPSBTRequest(psbt,
+            sigHash,
+            network);
 
         var inputJson = JsonSerializer.Serialize(input);
 
@@ -54,13 +58,17 @@ public class FunctionTest : IDisposable
         //Act
         var result = await function.FunctionHandler(request, context);
 
+        result.StatusCode.Should().Be(200);
+        
         var responseBody = JsonSerializer.Deserialize<SignPSBTResponse>(result.Body);
 
-        var parsedPSBT = PSBT.Parse(responseBody.Psbt ?? throw new InvalidOperationException(), Network.RegTest);
+        var parsedPSBT = PSBT.Parse(responseBody.Psbt ?? throw new InvalidOperationException(), Function.ParseNetwork(network));
 
         //Assert
         responseBody.Should().NotBeNull();
-        parsedPSBT.Inputs.All(x => x.PartialSigs.Count == 2).Should().BeTrue();
+        //Now compare parsedPSBT with originalPSBT and check that the number of partial signatures has been increased
+        parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count).Should()
+            .BeGreaterThan(originalPSBT.Inputs.Sum(x => x.PartialSigs.Count));
         parsedPSBT.Inputs.All(x => x.SighashType == input.EnforcedSighash).Should().BeTrue();
     }
 
