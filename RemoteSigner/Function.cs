@@ -62,133 +62,15 @@ public class Function
             var kmsClient = new AmazonKeyManagementServiceClient();
 #endif
 
-            var network = ParseNetwork(requestBody.Network);
+            Task<string> GetSeed(RootedKeyPath derivationPath) => DecryptSeed(kmsClient, derivationPath);
+            var result = SignPSBT(requestBody.Psbt, requestBody.Network, requestBody.EnforcedSighash, GetSeed);
 
-            Console.WriteLine($"Network: {network}");
-
-            if (PSBT.TryParse(requestBody.Psbt, network, out var parsedPSBT))
+            response = new APIGatewayHttpApiV2ProxyResponse()
             {
-                parsedPSBT.AssertSanity();
-                
-                foreach (var psbtInput in parsedPSBT.Inputs)
-                {
-                    //We search for a fingerprint that can be used as a key for getting the config (env-var)
-                    //Ideally, only fingerprints of the FundsManager signer wallet are set as env vars
-                    var derivationPath = psbtInput.HDKeyPaths.Values.SingleOrDefault(x =>
-                        Environment.GetEnvironmentVariable($"MF_{x.MasterFingerprint.ToString()}") != null);
-                    if (derivationPath == null)
-                    {
-                        throw new ArgumentException(
-                            "Invalid PSBT, the derivation path and the signing configuration cannot be found for none of the master fingerprints of all the pub keys",
-                            nameof(derivationPath));
-                    }
-
-                    var inputPSBTMasterFingerPrint = derivationPath.MasterFingerprint;
-
-                    var masterFingerPrint = $"MF_{inputPSBTMasterFingerPrint}";
-                    var configJson = Environment.GetEnvironmentVariable(masterFingerPrint);
-
-
-                    if (configJson != null)
-                    {
-                        var config = JsonSerializer.Deserialize<SignPSBTConfig>(configJson);
-
-                        if (config == null)
-                        {
-                            var message = "The config could not be deserialized";
-                            await Console.Error.WriteLineAsync(message);
-                            throw new ArgumentException(message, nameof(config));
-                        }
-
-                        var decryptedSeed = await kmsClient.DecryptAsync(new DecryptRequest
-                        {
-                            CiphertextBlob = new MemoryStream(Convert.FromBase64String(config.EncryptedSeedphrase)),
-                            EncryptionAlgorithm = EncryptionAlgorithmSpec.SYMMETRIC_DEFAULT,
-                            KeyId = config.AwsKmsKeyId
-                        });
-
-                        if (decryptedSeed == null)
-                        {
-                            var message = "The seedphrase could not be decrypted / found";
-
-                            throw new ArgumentException(message, nameof(decryptedSeed));
-                        }
-
-                        var array = decryptedSeed.Plaintext.ToArray();
-
-                        //The seedphrase words were originally splitted with @ instead of whitespaces due to AWS removing them on encryption
-                        var seed = Encoding.UTF8.GetString(array).Replace("@", " ");
-
-                        var extKey = new Mnemonic(seed).DeriveExtKey();
-                        var bitcoinExtKey = extKey.GetWif(network);
-
-
-                        //Validate global xpubs
-                        await ValidateXPub(parsedPSBT, bitcoinExtKey);
-
-                        var fingerPrint = bitcoinExtKey.GetPublicKey().GetHDFingerPrint();
-
-                        if (fingerPrint != inputPSBTMasterFingerPrint)
-                        {
-                            var mismatchingFingerprint =
-                                $"The master fingerprint from the input does not match the master fingerprint from the encrypted seedphrase master fingerprint";
-
-                            throw new ArgumentException(mismatchingFingerprint, nameof(fingerPrint));
-                        }
-
-                        //We can enforce the sighash for all the inputs in the request in case the PSBT was not modified or serialized correctly.
-                        if (requestBody.EnforcedSighash != null)
-                        {
-                            psbtInput.SighashType = requestBody.EnforcedSighash;
-
-                            Console.WriteLine($"Enforced sighash: {psbtInput.SighashType:G}");
-                        }
-
-
-                        var key = bitcoinExtKey
-                            .Derive(derivationPath.KeyPath)
-                            .PrivateKey;
-
-                        //Log
-                        Console.WriteLine(
-                            $"Signing PSBT input:{psbtInput.Index} with master fingerprint: {fingerPrint} on derivation path: {derivationPath.KeyPath} with pubkey: {key.PubKey.ToHex()}");
-                        
-                        var partialSigsCountBeforeSigning = psbtInput.PartialSigs.Count(x=> x.Key == key.PubKey);
-
-                        //We sign the input
-                        psbtInput.Sign(key);
-
-                        //We check that the partial signatures number has changed, otherwise finalize inmediately
-                        var partialSigsCountAfterSignature =
-                            parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count(x=> x.Key == key.PubKey));
-
-                        //We should have added a signature for each input, plus already existing signatures
-                        var expectedPartialSigs = partialSigsCountBeforeSigning + 1;
-
-                        if (partialSigsCountAfterSignature == 0 ||
-                            partialSigsCountAfterSignature != expectedPartialSigs)
-                        {
-                            var invalidNoOfPartialSignatures =
-                                $"Invalid expected number of partial signatures after signing the PSBT, expected: {expectedPartialSigs}, actual: {partialSigsCountAfterSignature}";
-
-                            throw new ArgumentException(
-                                invalidNoOfPartialSignatures);
-                        }
-                    }
-                }
-
-                //We check that the PSBT is still valid after signing
-                parsedPSBT.AssertSanity();
-
-                var result = new SignPSBTResponse(parsedPSBT.ToBase64());
-
-                response = new APIGatewayHttpApiV2ProxyResponse()
-                {
-                    Body = JsonSerializer.Serialize(result),
-                    IsBase64Encoded = false,
-                    StatusCode = 200
-                };
-            }
+                Body = JsonSerializer.Serialize(result),
+                IsBase64Encoded = false,
+                StatusCode = 200
+            };
 
 
             Console.WriteLine($"Signing request finished");
@@ -205,6 +87,141 @@ public class Function
         }
 
         return response;
+    }
+
+    public async Task<SignPSBTResponse?> SignPSBT(string psbt, string networkStr, SigHash? enforcedSighash, Func<RootedKeyPath?, Task<string?>> getSeed)
+    {
+        var network = ParseNetwork(networkStr);
+
+        Console.WriteLine($"Network: {network}");
+
+        if (PSBT.TryParse(psbt, network, out var parsedPSBT))
+        {
+            parsedPSBT.AssertSanity();
+
+            foreach (var psbtInput in parsedPSBT.Inputs)
+            {
+                //We search for a fingerprint that can be used as a key for getting the config (env-var)
+                //Ideally, only fingerprints of the FundsManager signer wallet are set as env vars
+                var derivationPath = psbtInput.HDKeyPaths.Values.SingleOrDefault(x =>
+                    Environment.GetEnvironmentVariable($"MF_{x.MasterFingerprint.ToString()}") != null);
+                if (derivationPath == null)
+                {
+                    throw new ArgumentException(
+                        "Invalid PSBT, the derivation path and the signing configuration cannot be found for none of the master fingerprints of all the pub keys",
+                        nameof(derivationPath));
+                }
+
+                var inputPSBTMasterFingerPrint = derivationPath.MasterFingerprint;
+
+                var seed = await getSeed(derivationPath);
+                if (seed != null)
+                {
+                    var extKey = new Mnemonic(seed).DeriveExtKey();
+                    var bitcoinExtKey = extKey.GetWif(network);
+
+
+                    //Validate global xpubs
+                    await ValidateXPub(parsedPSBT, bitcoinExtKey);
+
+                    var fingerPrint = bitcoinExtKey.GetPublicKey().GetHDFingerPrint();
+
+                    if (fingerPrint != inputPSBTMasterFingerPrint)
+                    {
+                        var mismatchingFingerprint =
+                            $"The master fingerprint from the input does not match the master fingerprint from the encrypted seedphrase master fingerprint";
+
+                        throw new ArgumentException(mismatchingFingerprint, nameof(fingerPrint));
+                    }
+
+                    //We can enforce the sighash for all the inputs in the request in case the PSBT was not modified or serialized correctly.
+                    if (enforcedSighash != null)
+                    {
+                        psbtInput.SighashType = enforcedSighash;
+
+                        Console.WriteLine($"Enforced sighash: {psbtInput.SighashType:G}");
+                    }
+
+
+                    var key = bitcoinExtKey
+                        .Derive(derivationPath.KeyPath)
+                        .PrivateKey;
+
+                    //Log
+                    Console.WriteLine(
+                        $"Signing PSBT input:{psbtInput.Index} with master fingerprint: {fingerPrint} on derivation path: {derivationPath.KeyPath} with pubkey: {key.PubKey.ToHex()}");
+
+                    var partialSigsCountBeforeSigning = parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count(x => x.Key == key.PubKey));
+
+                    //We sign the input
+                    psbtInput.Sign(key);
+
+                    //We check that the partial signatures number has changed, otherwise finalize inmediately
+                    var partialSigsCountAfterSignature =
+                        parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count(x => x.Key == key.PubKey));
+
+                    //We should have added a signature for each input, plus already existing signatures
+                    var expectedPartialSigs = partialSigsCountBeforeSigning + 1;
+
+                    if (partialSigsCountAfterSignature == 0 ||
+                        partialSigsCountAfterSignature != expectedPartialSigs)
+                    {
+                        var invalidNoOfPartialSignatures =
+                            $"Invalid expected number of partial signatures after signing the PSBT, expected: {expectedPartialSigs}, actual: {partialSigsCountAfterSignature}";
+
+                        throw new ArgumentException(
+                            invalidNoOfPartialSignatures);
+                    }
+                }
+            }
+
+            //We check that the PSBT is still valid after signing
+            parsedPSBT.AssertSanity();
+
+            return new SignPSBTResponse(parsedPSBT.ToBase64());
+        }
+
+        return null;
+    }
+
+    private static async Task<string?> DecryptSeed(AmazonKeyManagementServiceClient kmsClient, RootedKeyPath? derivationPath)
+    {
+        var inputPSBTMasterFingerPrint = derivationPath.MasterFingerprint;
+
+        var masterFingerPrint = $"MF_{inputPSBTMasterFingerPrint}";
+        var configJson = Environment.GetEnvironmentVariable(masterFingerPrint);
+
+        if (configJson == null) return null;
+
+        var config = JsonSerializer.Deserialize<SignPSBTConfig>(configJson);
+
+        if (config == null)
+        {
+            var message = "The config could not be deserialized";
+            await Console.Error.WriteLineAsync(message);
+            throw new ArgumentException(message, nameof(config));
+        }
+
+        var decryptedSeed = await kmsClient.DecryptAsync(new DecryptRequest
+        {
+            CiphertextBlob = new MemoryStream(Convert.FromBase64String(config.EncryptedSeedphrase)),
+            EncryptionAlgorithm = EncryptionAlgorithmSpec.SYMMETRIC_DEFAULT,
+            KeyId = config.AwsKmsKeyId
+        });
+
+        if (decryptedSeed == null)
+        {
+            var message = "The seedphrase could not be decrypted / found";
+
+            throw new ArgumentException(message, nameof(decryptedSeed));
+        }
+
+        var array = decryptedSeed.Plaintext.ToArray();
+
+        //The seedphrase words were originally splitted with @ instead of whitespaces due to AWS removing them on encryption
+        var seed = Encoding.UTF8.GetString(array).Replace("@", " ");
+
+        return seed;
     }
 
     public static Network ParseNetwork(string upperCaseNetwork)

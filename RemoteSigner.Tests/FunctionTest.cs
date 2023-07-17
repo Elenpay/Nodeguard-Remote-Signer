@@ -16,7 +16,7 @@ public class FunctionTest : IDisposable
     /// <returns></returns>
     public FunctionTest()
     {
-        
+
         var config = new SignPSBTConfig
         {
             AwsKmsKeyId = awsKmsKeyId,
@@ -31,17 +31,19 @@ public class FunctionTest : IDisposable
     {
         Environment.SetEnvironmentVariable("MF_ed0210c8", null);
     }
-    
+
     [Theory]
     [InlineData("cHNidP8BAF4BAAAAAcbYkt1iwOa6IsI8lrNx1DWQCCg/y7+fQTlfEhDIKOWVAAAAAAD/////AeiN9QUAAAAAIgAgg+aofANl6wKKByTgFl5yBnqUK8f7sn4ULhAAIJb1C0cAAAAATwEENYfPAy8RJCyAAAAB/DvuQjoBjOttImoGYyiO0Pte4PqdeQqzcNAw4Ecw5sgDgI4uHNSCvdBxlpQ8WoEz0WmvhgIra7A4F3FkTsB0RNcQH8zk3jAAAIABAACAAQAAgE8BBDWHzwNWrAP0gAAAAfkIrkpmsP+hqxS1WvDOSPKnAiXLkBCQLWkBr5C5Po+BAlGvFeBbuLfqwYlbP19H/+/s2DIaAu8iKY+J0KIDffBgEGDzoLMwAACAAQAAgAEAAIBPAQQ1h88DfblGjYAAAAH1InDHaHo6+zUe9PG5owwQ87bTkhcGg66pSIwTmhHJmAMiI4UjOOpn+/2Nw1KrJiXnmid2RiEja/HAITCQ00ienxDtAhDIMAAAgAEAAIABAACAAAEBK2SQ9QUAAAAAIgAguNLINpkV//IIFd1ti2ig15+6mPOhNWykV0mwsneO9FciAgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BkcwRAIgPcwj6yaA6RZn+4YSHi4S1WE5ziHEt0IZO5KqDE5B0zMCID6cSLumR2AbgwqMTI3/Z3szEyMQauxtzvBpY8Z4oSp8AgEDBAIAAAABBWlSIQMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BiEDgTQLkhqca3brBTunNmjIsb4WEsFryTwd3BH/ZPS4KkohA91uD9EYRlzIBT6yNU2S2L/wvOA0/em4ocaM//veOtN2U64iBgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BhgfzOTeMAAAgAEAAIABAACAAQAAAAAAAAAiBgOBNAuSGpxrdusFO6c2aMixvhYSwWvJPB3cEf9k9LgqShjtAhDIMAAAgAEAAIABAACAAQAAAAAAAAAiBgPdbg/RGEZcyAU+sjVNkti/8LzgNP3puKHGjP/73jrTdhhg86CzMAAAgAEAAIABAACAAQAAAAAAAAAAAA==", SigHash.All, "Regtest")]
     [InlineData("cHNidP8BAF4BAAAAAcbYkt1iwOa6IsI8lrNx1DWQCCg/y7+fQTlfEhDIKOWVAAAAAAD/////AeiN9QUAAAAAIgAgg+aofANl6wKKByTgFl5yBnqUK8f7sn4ULhAAIJb1C0cAAAAATwEENYfPAy8RJCyAAAAB/DvuQjoBjOttImoGYyiO0Pte4PqdeQqzcNAw4Ecw5sgDgI4uHNSCvdBxlpQ8WoEz0WmvhgIra7A4F3FkTsB0RNcQH8zk3jAAAIABAACAAQAAgE8BBDWHzwNWrAP0gAAAAfkIrkpmsP+hqxS1WvDOSPKnAiXLkBCQLWkBr5C5Po+BAlGvFeBbuLfqwYlbP19H/+/s2DIaAu8iKY+J0KIDffBgEGDzoLMwAACAAQAAgAEAAIBPAQQ1h88DfblGjYAAAAH1InDHaHo6+zUe9PG5owwQ87bTkhcGg66pSIwTmhHJmAMiI4UjOOpn+/2Nw1KrJiXnmid2RiEja/HAITCQ00ienxDtAhDIMAAAgAEAAIABAACAAAEBK2SQ9QUAAAAAIgAguNLINpkV//IIFd1ti2ig15+6mPOhNWykV0mwsneO9FciAgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BkcwRAIgPcwj6yaA6RZn+4YSHi4S1WE5ziHEt0IZO5KqDE5B0zMCID6cSLumR2AbgwqMTI3/Z3szEyMQauxtzvBpY8Z4oSp8AgEDBAIAAAABBWlSIQMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BiEDgTQLkhqca3brBTunNmjIsb4WEsFryTwd3BH/ZPS4KkohA91uD9EYRlzIBT6yNU2S2L/wvOA0/em4ocaM//veOtN2U64iBgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BhgfzOTeMAAAgAEAAIABAACAAQAAAAAAAAAiBgOBNAuSGpxrdusFO6c2aMixvhYSwWvJPB3cEf9k9LgqShjtAhDIMAAAgAEAAIABAACAAQAAAAAAAAAiBgPdbg/RGEZcyAU+sjVNkti/8LzgNP3puKHGjP/73jrTdhhg86CzMAAAgAEAAIABAACAAQAAAAAAAAAAAA==", SigHash.None, "Regtest")]
     [InlineData("cHNidP8BAKQBAAAAAwXAGAr1uq/i06r+EW2SjFMKQp3Pg0q+eJcqQ9iWKLrMAAAAAAD/////E9fa5RGuwTHL6xLgYpdDDXz2piFg7F9UWPZXyAZdM8kAAAAAAP////9YszwapNpRRrI7LFJglswjr9SLkao+ywZq/AtjZMDChAAAAAAA/////wGsJgMGAAAAABYAFJO3OqgJq4Mr3qWsDV1YUNj0aDHQAAAAAE8BBDWHzwN9uUaNAAAAAIDetxqi8U7tfzci9EleGtB59Z/A84PlsnvZ229emSEgA6/rPqXCpw3EqihylkpeL/EXKvNGahv+0Dm2JmVJf8VGEO0CEMgwAACAAQAAgAAAAAAAAQEfjGkeAAAAAAAWABQCmza03sKejExNXjBVHR8UyJJWpgEDBAIAAAAiBgIUCFqogmf/kpcaV+42XlzRzx4OWdqxWDesHZkVuK70sBjtAhDIMAAAgAEAAIAAAAAAAAAAAD0AAAAAAQEfyFrXBQAAAAAWABR9cTsoys8smwP2qmjSQM06tKj4fwEDBAIAAAAiBgPzpHxMZtZ1f3rW4L0yyV4gPS45MGMDooXHpvIhAGbvtBjtAhDIMAAAgAEAAIAAAAAAAQAAAC8AAAAAAQEfMGYNAAAAAAAWABRmqBq5qDk2/37GDEq0zM5HXigXjwEDBAIAAAAiBgJr4vl26F2PI9F3JT63vX1qltyDoaAOZ/D212UNJ3u1XhjtAhDIMAAAgAEAAIAAAAAAAQAAADQAAAAAAA==", SigHash.All, "Regtest")]
     [InlineData("cHNidP8BAKQBAAAAAwXAGAr1uq/i06r+EW2SjFMKQp3Pg0q+eJcqQ9iWKLrMAAAAAAD/////E9fa5RGuwTHL6xLgYpdDDXz2piFg7F9UWPZXyAZdM8kAAAAAAP////9YszwapNpRRrI7LFJglswjr9SLkao+ywZq/AtjZMDChAAAAAAA/////wGsJgMGAAAAABYAFJO3OqgJq4Mr3qWsDV1YUNj0aDHQAAAAAE8BBDWHzwN9uUaNAAAAAIDetxqi8U7tfzci9EleGtB59Z/A84PlsnvZ229emSEgA6/rPqXCpw3EqihylkpeL/EXKvNGahv+0Dm2JmVJf8VGEO0CEMgwAACAAQAAgAAAAAAAAQEfjGkeAAAAAAAWABQCmza03sKejExNXjBVHR8UyJJWpgEDBAIAAAAiBgIUCFqogmf/kpcaV+42XlzRzx4OWdqxWDesHZkVuK70sBjtAhDIMAAAgAEAAIAAAAAAAAAAAD0AAAAAAQEfyFrXBQAAAAAWABR9cTsoys8smwP2qmjSQM06tKj4fwEDBAIAAAAiBgPzpHxMZtZ1f3rW4L0yyV4gPS45MGMDooXHpvIhAGbvtBjtAhDIMAAAgAEAAIAAAAAAAQAAAC8AAAAAAQEfMGYNAAAAAAAWABRmqBq5qDk2/37GDEq0zM5HXigXjwEDBAIAAAAiBgJr4vl26F2PI9F3JT63vX1qltyDoaAOZ/D212UNJ3u1XhjtAhDIMAAAgAEAAIAAAAAAAQAAADQAAAAAAA==", SigHash.None, "Regtest")]
+    // Input UTXOs have the same derivation path
+    [InlineData("cHNidP8BAIUBAAAAA5AuveJtsmh34KQCGn2QjTVgYZeAP0wBbFfk5ZOGpl0OAAAAAAD/////0qsBGBoCPD41OUI73G9W8Q1hv3z8MkaGRgWlTiutSFwAAAAAAP////+7IC+zZyJI1BBQ/ghKrJi18xK+L7VVg1Q/B4ohnnMFsAEAAAAA/////wAAAAAATwEENYfPA325Ro0AAAABg9H86IDUttPPFss+9te+0DByQgbeD7RPXNuVH9mh1qIDnMEWyKA+kvyG038on8+HxI+9AD8r6ZI1dNIDSGC8824Q7QIQyDAAAIABAACAAQAAAAABAR+ghgEAAAAAABYAFBQptc6zAas/qjlmx6MhONjyd11nAQMEAgAAACIGAvFR60eN3aNhBP2/c4cH9itYW+UFAq7F1bDfFv40mrRiGO0CEMgwAACAAQAAgAEAAAAAAAAAMwAAAAABAR+ghgEAAAAAABYAFBQptc6zAas/qjlmx6MhONjyd11nAQMEAgAAACIGAvFR60eN3aNhBP2/c4cH9itYW+UFAq7F1bDfFv40mrRiGO0CEMgwAACAAQAAgAEAAAAAAAAAMwAAAAABAR+ghgEAAAAAABYAFBQptc6zAas/qjlmx6MhONjyd11nAQMEAgAAACIGAvFR60eN3aNhBP2/c4cH9itYW+UFAq7F1bDfFv40mrRiGO0CEMgwAACAAQAAgAEAAAAAAAAAMwAAAAA=", SigHash.All, "Regtest")]
+    [InlineData("cHNidP8BAIUBAAAAA5AuveJtsmh34KQCGn2QjTVgYZeAP0wBbFfk5ZOGpl0OAAAAAAD/////0qsBGBoCPD41OUI73G9W8Q1hv3z8MkaGRgWlTiutSFwAAAAAAP////+7IC+zZyJI1BBQ/ghKrJi18xK+L7VVg1Q/B4ohnnMFsAEAAAAA/////wAAAAAATwEENYfPA325Ro0AAAABg9H86IDUttPPFss+9te+0DByQgbeD7RPXNuVH9mh1qIDnMEWyKA+kvyG038on8+HxI+9AD8r6ZI1dNIDSGC8824Q7QIQyDAAAIABAACAAQAAAAABAR+ghgEAAAAAABYAFBQptc6zAas/qjlmx6MhONjyd11nAQMEAgAAACIGAvFR60eN3aNhBP2/c4cH9itYW+UFAq7F1bDfFv40mrRiGO0CEMgwAACAAQAAgAEAAAAAAAAAMwAAAAABAR+ghgEAAAAAABYAFBQptc6zAas/qjlmx6MhONjyd11nAQMEAgAAACIGAvFR60eN3aNhBP2/c4cH9itYW+UFAq7F1bDfFv40mrRiGO0CEMgwAACAAQAAgAEAAAAAAAAAMwAAAAABAR+ghgEAAAAAABYAFBQptc6zAas/qjlmx6MhONjyd11nAQMEAgAAACIGAvFR60eN3aNhBP2/c4cH9itYW+UFAq7F1bDfFv40mrRiGO0CEMgwAACAAQAAgAEAAAAAAAAAMwAAAAA=", SigHash.None, "Regtest")]
     public async Task SignTest(string psbt, SigHash sigHash, string network)
     {
         //Arrange
         var function = new Function();
-        var context = new TestLambdaContext();
 
         var originalPSBT = PSBT.Parse(psbt, Function.ParseNetwork(network));
 
@@ -49,23 +51,14 @@ public class FunctionTest : IDisposable
             sigHash,
             network);
 
-        var inputJson = JsonSerializer.Serialize(input);
-
-        var request = new APIGatewayHttpApiV2ProxyRequest
-        {
-            Body = inputJson
-        };
+        Func<RootedKeyPath?, Task<string?>> GetSeed = (_) => Task.FromResult("middle teach digital prefer fiscal theory syrup enter crash muffin easily anxiety ill barely eagle swim volume consider dynamic unaware deputy middle into physical");
         //Act
-        var result = await function.FunctionHandler(request, context);
+        var result = await function.SignPSBT(psbt, network, sigHash, GetSeed);
 
-        result.StatusCode.Should().Be(200);
-        
-        var responseBody = JsonSerializer.Deserialize<SignPSBTResponse>(result.Body);
-
-        var parsedPSBT = PSBT.Parse(responseBody.Psbt ?? throw new InvalidOperationException(), Function.ParseNetwork(network));
+        var parsedPSBT = PSBT.Parse(result.Psbt ?? throw new InvalidOperationException(), Function.ParseNetwork(network));
 
         //Assert
-        responseBody.Should().NotBeNull();
+        result.Should().NotBeNull();
         //Now compare parsedPSBT with originalPSBT and check that the number of partial signatures has been increased
         parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count).Should()
             .BeGreaterThan(originalPSBT.Inputs.Sum(x => x.PartialSigs.Count));
@@ -117,7 +110,6 @@ public class FunctionTest : IDisposable
     {
         //Arrange
         var function = new Function();
-        var context = new TestLambdaContext();
 
         //Test PSBT with 1 partial sig on input 0
         //JSON
@@ -136,23 +128,12 @@ public class FunctionTest : IDisposable
             }
         }
 
-        var input = new SignPSBTRequest(
-            psbt.ToBase64(),
-            SigHash.All,
-            "Regtest");
-
-        var inputJson = JsonSerializer.Serialize(input);
-
-        var request = new APIGatewayHttpApiV2ProxyRequest
-        {
-            Body = inputJson
-        };
+        Func<RootedKeyPath?, Task<string?>> GetSeed = (_) => Task.FromResult("middle teach digital prefer fiscal theory syrup enter crash muffin easily anxiety ill barely eagle swim volume consider dynamic unaware deputy middle into physical");
         //Act
-        var result = await function.FunctionHandler(request, context);
+        var act = () => function.SignPSBT(psbt.ToBase64(), "Regtest", SigHash.All, GetSeed);
 
         //Assert
-        result.StatusCode.Should().Be(500);
-        result.Body.Should().Contain("partial");
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("Invalid expected number of partial signatures after signing the PSBT, expected: 1, actual: 0");
     }
 
     [Fact]
@@ -174,7 +155,7 @@ public class FunctionTest : IDisposable
 
         base64Decoding.Should().NotBeEmpty();
     }
-    
+
 
     [Fact]
     public async Task ValidateXPub_ValidInputs_NoExceptionThrown()
@@ -219,7 +200,7 @@ public class FunctionTest : IDisposable
         // Arrange
         var function = new Function();
         var psbt = PSBT.Parse("cHNidP8BAF4BAAAAAcbYkt1iwOa6IsI8lrNx1DWQCCg/y7+fQTlfEhDIKOWVAAAAAAD/////AeiN9QUAAAAAIgAgg+aofANl6wKKByTgFl5yBnqUK8f7sn4ULhAAIJb1C0cAAAAATwEENYfPAy8RJCyAAAAB/DvuQjoBjOttImoGYyiO0Pte4PqdeQqzcNAw4Ecw5sgDgI4uHNSCvdBxlpQ8WoEz0WmvhgIra7A4F3FkTsB0RNcQH8zk3jAAAIABAACAAQAAgE8BBDWHzwNWrAP0gAAAAfkIrkpmsP+hqxS1WvDOSPKnAiXLkBCQLWkBr5C5Po+BAlGvFeBbuLfqwYlbP19H/+/s2DIaAu8iKY+J0KIDffBgEGDzoLMwAACAAQAAgAEAAIBPAQQ1h88DfblGjYAAAAH1InDHaHo6+zUe9PG5owwQ87bTkhcGg66pSIwTmhHJmAMiI4UjOOpn+/2Nw1KrJiXnmid2RiEja/HAITCQ00ienxDtAhDIMAAAgAEAAIABAACAAAEBK2SQ9QUAAAAAIgAguNLINpkV//IIFd1ti2ig15+6mPOhNWykV0mwsneO9FciAgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BkcwRAIgPcwj6yaA6RZn+4YSHi4S1WE5ziHEt0IZO5KqDE5B0zMCID6cSLumR2AbgwqMTI3/Z3szEyMQauxtzvBpY8Z4oSp8AgEDBAIAAAABBWlSIQMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BiEDgTQLkhqca3brBTunNmjIsb4WEsFryTwd3BH/ZPS4KkohA91uD9EYRlzIBT6yNU2S2L/wvOA0/em4ocaM//veOtN2U64iBgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BhgfzOTeMAAAgAEAAIABAACAAQAAAAAAAAAiBgOBNAuSGpxrdusFO6c2aMixvhYSwWvJPB3cEf9k9LgqShjtAhDIMAAAgAEAAIABAACAAQAAAAAAAAAiBgPdbg/RGEZcyAU+sjVNkti/8LzgNP3puKHGjP/73jrTdhhg86CzMAAAgAEAAIABAACAAQAAAAAAAAAAAA==",Network.RegTest);;
-        BitcoinExtKey masterXpriv = null; 
+        BitcoinExtKey masterXpriv = null;
 
 
         // Act
@@ -245,8 +226,8 @@ public class FunctionTest : IDisposable
         var act = async () => await function.ValidateXPub(psbt, masterXpriv);
 
         // Assert
-        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*is not present in the global xpubs*"); 
-        
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*is not present in the global xpubs*");
+
     }
 
     [Fact]
@@ -259,7 +240,7 @@ public class FunctionTest : IDisposable
             new Mnemonic(
                     "middle teach digital prefer fiscal theory syrup enter crash muffin easily anxiety ill barely eagle swim volume consider dynamic unaware deputy middle into physical")
                 .DeriveExtKey().GetWif(Network.Main);
-        
+
 
         // Act
         var act = async () => await function.ValidateXPub(psbt, masterXpriv);
