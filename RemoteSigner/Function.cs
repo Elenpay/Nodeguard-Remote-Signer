@@ -89,9 +89,9 @@ public class Function
         return response;
     }
 
-    public async Task<SignPSBTResponse?> SignPSBT(string psbt, string network_str, SigHash? enforcedSighash, Func<RootedKeyPath?, Task<string?>> getSeed)
+    public async Task<SignPSBTResponse?> SignPSBT(string psbt, string networkStr, SigHash? enforcedSighash, Func<RootedKeyPath?, Task<string?>> getSeed)
     {
-        var network = ParseNetwork(network_str);
+        var network = ParseNetwork(networkStr);
 
         Console.WriteLine($"Network: {network}");
 
