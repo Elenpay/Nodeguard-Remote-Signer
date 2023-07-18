@@ -63,7 +63,7 @@ public class Function
 #endif
 
             Task<string> GetSeed(RootedKeyPath derivationPath) => DecryptSeed(kmsClient, derivationPath);
-            var result = SignPSBT(requestBody.Psbt, requestBody.Network, requestBody.EnforcedSighash, GetSeed);
+            var result = await SignPSBT(requestBody.Psbt, requestBody.Network, requestBody.EnforcedSighash, GetSeed);
 
             response = new APIGatewayHttpApiV2ProxyResponse()
             {
