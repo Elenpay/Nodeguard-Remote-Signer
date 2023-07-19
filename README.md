@@ -81,3 +81,15 @@ Example (json-like structure of key-value, `ed0210c8` is the master fingerprint 
   "AwsKmsKeyId": "mrk-cec3e3ef59bc4616a6f44da60bfea0ba"
 }}
 ```
+
+## Deploying the lambda function
+
+### Requirements
+* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
+* [JUST](https://github.com/casey/just)
+* Access to the AWS account where the lambda function will be deployed
+
+### Deploy
+```bash
+just deploy
+```
