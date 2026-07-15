@@ -11,11 +11,11 @@ RUN dotnet build "RemoteSigner.csproj" --configuration Release --output /app/bui
 
 FROM build AS publish
 RUN dotnet publish "RemoteSigner.csproj" \
-            --configuration Release \ 
+            --configuration Release \
             --runtime linux-x64 \
-            --self-contained false \ 
+            --self-contained false \
             --output /app/publish \
-            -p:PublishReadyToRun=true  
+            -p:PublishReadyToRun=true
 
 FROM base AS final
 WORKDIR /var/task
