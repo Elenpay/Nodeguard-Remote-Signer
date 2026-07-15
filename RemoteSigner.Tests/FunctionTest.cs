@@ -65,7 +65,7 @@ public class FunctionTest : IDisposable
         parsedPSBT.Inputs.All(x => x.SighashType == input.EnforcedSighash).Should().BeTrue();
     }
 
-    [Fact]
+    [Fact(Skip = "Requires AWS credentials to call KMS, not available in CI")]
     public async Task FailedSignTest_InvalidDerivationPath()
     {
         //Arrange
@@ -136,7 +136,7 @@ public class FunctionTest : IDisposable
         await act.Should().ThrowAsync<ArgumentException>().WithMessage("Invalid expected number of partial signatures after signing the PSBT, expected: 1, actual: 0");
     }
 
-    [Fact]
+    [Fact(Skip = "Requires AWS credentials to call KMS, not available in CI")]
     public async Task GenerateEncryptedSeedTest()
     {
         //Arrange
