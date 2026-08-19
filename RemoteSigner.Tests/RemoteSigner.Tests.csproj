@@ -6,6 +6,7 @@
     <RootNamespace>RemoteSigner.Tests</RootNamespace> 
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\RemoteSigner.SeedCeremony\RemoteSigner.SeedCeremony.csproj" />
     <PackageReference Include="Amazon.Lambda.Core" Version="3.3.0" />
     <PackageReference Include="Amazon.Lambda.TestUtilities" Version="4.2.0" />
     <PackageReference Include="FluentAssertions" Version="6.11.0" />
