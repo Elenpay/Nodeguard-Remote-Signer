@@ -7,7 +7,7 @@ using Amazon.KeyManagementService.Model;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
-using Amazon.Runtime;
+using Amazon.Runtime.CredentialManagement;
 using NBitcoin;
 
 [assembly:
@@ -56,8 +56,10 @@ public class Function
             if (requestBody == null) throw new ArgumentNullException(nameof(requestBody), "Request body not found");
 
 #if DEBUG
-            var kmsClient = new AmazonKeyManagementServiceClient(new StoredProfileAWSCredentials("default"),
-                RegionEndpoint.EUCentral1);
+            //AWS SDK v4 removed StoredProfileAWSCredentials; resolve the "default" profile explicitly
+            if (!new CredentialProfileStoreChain().TryGetAWSCredentials("default", out var debugCredentials))
+                throw new InvalidOperationException("AWS profile 'default' was not found");
+            var kmsClient = new AmazonKeyManagementServiceClient(debugCredentials, RegionEndpoint.EUCentral1);
 #else
             var kmsClient = new AmazonKeyManagementServiceClient();
 #endif
