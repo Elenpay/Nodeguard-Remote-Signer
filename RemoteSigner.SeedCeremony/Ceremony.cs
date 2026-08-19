@@ -47,6 +47,13 @@ public static class Ceremony
         return new CeremonyResult(masterFingerprint, accountXpub, $"MF_{masterFingerprint}");
     }
 
+    //Relaxed escaping keeps base64 plus signs literal instead of the default encoder's u002B
+    //unicode escapes; JSON parsers decode both identically
+    private static readonly JsonSerializerOptions EnvValueSerializerOptions = new()
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
     /// <summary>
     /// Builds the MF_* env var value by serializing the lambda's own SignPSBTConfig DTO, so the
     /// JSON shape/casing can never drift from what the lambda deserializes
@@ -61,7 +68,7 @@ public static class Ceremony
             AwsKmsKeyId = kmsKeyId
         };
 
-        return JsonSerializer.Serialize(config);
+        return JsonSerializer.Serialize(config, EnvValueSerializerOptions);
     }
 
     /// <summary>

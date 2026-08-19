@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace RemoteSigner.SeedCeremony;
@@ -24,7 +25,14 @@ public sealed class CeremonyManifest
 
     public required string CreatedAtUtc { get; init; }
 
-    private static readonly JsonSerializerOptions SerializerOptions = new() { WriteIndented = true };
+    //Relaxed escaping keeps the manifest human-readable instead of the default encoder's
+    //unicode escapes (u0022 for quotes, u002B for plus). Every JSON parser decodes both
+    //encodings identically; this is presentation only
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
 
     public string ToJson()
     {
