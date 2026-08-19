@@ -204,6 +204,18 @@ public class Function
             throw new ArgumentException(message, nameof(config));
         }
 
+        return await DecryptSeedphrase(kmsClient, config);
+    }
+
+    /// <summary>
+    /// Decrypts the seedphrase of a signing configuration with AWS KMS and restores the original
+    /// whitespaces (the words are stored joined with @ because AWS KMS removes whitespaces)
+    /// </summary>
+    /// <param name="kmsClient"></param>
+    /// <param name="config"></param>
+    /// <returns>The plaintext mnemonic</returns>
+    public static async Task<string> DecryptSeedphrase(IAmazonKeyManagementService kmsClient, SignPSBTConfig config)
+    {
         var decryptedSeed = await kmsClient.DecryptAsync(new DecryptRequest
         {
             CiphertextBlob = new MemoryStream(Convert.FromBase64String(config.EncryptedSeedphrase)),
@@ -285,6 +297,19 @@ public class Function
     /// <returns>Base64 encrypted seedphrase</returns>
     public async Task<string> EncryptSeedphrase(string mnemonicString, string keyId)
     {
+        return await EncryptSeedphrase(mnemonicString, keyId, new AmazonKeyManagementServiceClient());
+    }
+
+    /// <summary>
+    /// Overload of <see cref="EncryptSeedphrase(string,string)"/> with an injected KMS client so
+    /// callers (e.g. the seed-ceremony CLI) can control credentials/region and tests can fake KMS
+    /// </summary>
+    /// <param name="mnemonicString"></param>
+    /// <param name="keyId"></param>
+    /// <param name="kmsClient"></param>
+    /// <returns>Base64 encrypted seedphrase</returns>
+    public async Task<string> EncryptSeedphrase(string mnemonicString, string keyId, IAmazonKeyManagementService kmsClient)
+    {
         if (string.IsNullOrWhiteSpace(mnemonicString))
             throw new ArgumentException("Value cannot be null or whitespace.", nameof(mnemonicString));
         if (string.IsNullOrWhiteSpace(keyId))
@@ -304,8 +329,6 @@ public class Function
 
             throw;
         }
-
-        var kmsClient = new AmazonKeyManagementServiceClient();
 
         //To avoid KMS removing whitespaces and dismantling the seedphrase
         mnemonicString = mnemonicString.Replace(" ", "@");
