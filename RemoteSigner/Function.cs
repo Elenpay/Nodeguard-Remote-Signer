@@ -35,6 +35,15 @@ public class SignPSBTConfig
     /// AWS KMS Key Id used to decrypt the encrypted seedphrase
     /// </summary>
     public string AwsKmsKeyId { get; set; }
+
+    /// <summary>
+    /// When true, this seed may only co-sign true multisig inputs (threshold of 2 or more), so its
+    /// signature alone can never move funds. Meant for retired/rotated seeds: it contains
+    /// Lambda-mediated misuse (e.g. a compromised caller draining legacy single-sig wallets), it is
+    /// not a protection against a party holding the seed plaintext. Absent in existing env vars,
+    /// which deserializes to false.
+    /// </summary>
+    public bool Compromised { get; set; }
 }
 
 public class Function
@@ -116,6 +125,12 @@ public class Function
 
                 var inputPSBTMasterFingerPrint = derivationPath.MasterFingerprint;
 
+                var config = GetConfig(inputPSBTMasterFingerPrint);
+                if (config is { Compromised: true })
+                {
+                    EnsureCompromisedSeedOnlyCoSignsMultisig(psbtInput, inputPSBTMasterFingerPrint);
+                }
+
                 var seed = await getSeed(derivationPath);
                 if (seed != null)
                 {
@@ -186,12 +201,14 @@ public class Function
         return null;
     }
 
-    private static async Task<string?> DecryptSeed(AmazonKeyManagementServiceClient kmsClient, RootedKeyPath? derivationPath)
+    /// <summary>
+    /// Reads and deserializes the MF_{fingerprint} env var holding the signing configuration for a
+    /// master fingerprint. Returns null when no configuration exists for that fingerprint.
+    /// </summary>
+    /// <param name="masterFingerprint"></param>
+    public static SignPSBTConfig? GetConfig(HDFingerprint masterFingerprint)
     {
-        var inputPSBTMasterFingerPrint = derivationPath.MasterFingerprint;
-
-        var masterFingerPrint = $"MF_{inputPSBTMasterFingerPrint}";
-        var configJson = Environment.GetEnvironmentVariable(masterFingerPrint);
+        var configJson = Environment.GetEnvironmentVariable($"MF_{masterFingerprint}");
 
         if (configJson == null) return null;
 
@@ -200,9 +217,47 @@ public class Function
         if (config == null)
         {
             var message = "The config could not be deserialized";
-            await Console.Error.WriteLineAsync(message);
+            Console.Error.WriteLine(message);
             throw new ArgumentException(message, nameof(config));
         }
+
+        return config;
+    }
+
+    /// <summary>
+    /// Guard applied to seeds whose config is marked Compromised: the input being signed must be a
+    /// true multisig (threshold of 2 or more signatures), so this seed's signature alone can never
+    /// move funds. The script is taken from the input's signable coin, which NBitcoin only resolves
+    /// when the witness/redeem script is consistent with the UTXO's scriptPubKey.
+    /// </summary>
+    /// <param name="psbtInput"></param>
+    /// <param name="fingerprint"></param>
+    private static void EnsureCompromisedSeedOnlyCoSignsMultisig(PSBTInput psbtInput, HDFingerprint fingerprint)
+    {
+        var signableCoin = psbtInput.GetSignableCoin(out var coinError);
+
+        if (signableCoin == null)
+        {
+            throw new ArgumentException(
+                $"The seed for master fingerprint {fingerprint} is marked as compromised and the signable coin of input {psbtInput.Index} could not be resolved: {coinError}",
+                nameof(psbtInput));
+        }
+
+        var multisigParameters = PayToMultiSigTemplate.Instance.ExtractScriptPubKeyParameters(signableCoin.GetScriptCode());
+
+        if (multisigParameters == null || multisigParameters.SignatureCount < 2)
+        {
+            throw new ArgumentException(
+                $"The seed for master fingerprint {fingerprint} is marked as compromised, refusing to sign the non-multisig input {psbtInput.Index}; a compromised seed may only co-sign multisig inputs requiring at least 2 signatures",
+                nameof(psbtInput));
+        }
+    }
+
+    private static async Task<string?> DecryptSeed(AmazonKeyManagementServiceClient kmsClient, RootedKeyPath? derivationPath)
+    {
+        var config = GetConfig(derivationPath.MasterFingerprint);
+
+        if (config == null) return null;
 
         return await DecryptSeedphrase(kmsClient, config);
     }

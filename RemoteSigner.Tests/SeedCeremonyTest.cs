@@ -99,6 +99,7 @@ public class SeedCeremonyTest
         config.Should().NotBeNull();
         config!.EncryptedSeedphrase.Should().Be("AQIC-ciphertext");
         config.AwsKmsKeyId.Should().Be("mrk-123");
+        config.Compromised.Should().BeFalse();
     }
 
     [Fact]
