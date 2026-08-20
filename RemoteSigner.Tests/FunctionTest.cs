@@ -136,25 +136,78 @@ public class FunctionTest : IDisposable
         await act.Should().ThrowAsync<ArgumentException>().WithMessage("Invalid expected number of partial signatures after signing the PSBT, expected: 1, actual: 0");
     }
 
-    [Fact(Skip = "Requires AWS credentials to call KMS, not available in CI")]
-    public async Task GenerateEncryptedSeedTest()
+    //Multisig 2-of-3 P2WSH PSBT (same vector as the first SignTest case)
+    private const string MultisigPsbt =
+        "cHNidP8BAF4BAAAAAcbYkt1iwOa6IsI8lrNx1DWQCCg/y7+fQTlfEhDIKOWVAAAAAAD/////AeiN9QUAAAAAIgAgg+aofANl6wKKByTgFl5yBnqUK8f7sn4ULhAAIJb1C0cAAAAATwEENYfPAy8RJCyAAAAB/DvuQjoBjOttImoGYyiO0Pte4PqdeQqzcNAw4Ecw5sgDgI4uHNSCvdBxlpQ8WoEz0WmvhgIra7A4F3FkTsB0RNcQH8zk3jAAAIABAACAAQAAgE8BBDWHzwNWrAP0gAAAAfkIrkpmsP+hqxS1WvDOSPKnAiXLkBCQLWkBr5C5Po+BAlGvFeBbuLfqwYlbP19H/+/s2DIaAu8iKY+J0KIDffBgEGDzoLMwAACAAQAAgAEAAIBPAQQ1h88DfblGjYAAAAH1InDHaHo6+zUe9PG5owwQ87bTkhcGg66pSIwTmhHJmAMiI4UjOOpn+/2Nw1KrJiXnmid2RiEja/HAITCQ00ienxDtAhDIMAAAgAEAAIABAACAAAEBK2SQ9QUAAAAAIgAguNLINpkV//IIFd1ti2ig15+6mPOhNWykV0mwsneO9FciAgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BkcwRAIgPcwj6yaA6RZn+4YSHi4S1WE5ziHEt0IZO5KqDE5B0zMCID6cSLumR2AbgwqMTI3/Z3szEyMQauxtzvBpY8Z4oSp8AgEDBAIAAAABBWlSIQMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BiEDgTQLkhqca3brBTunNmjIsb4WEsFryTwd3BH/ZPS4KkohA91uD9EYRlzIBT6yNU2S2L/wvOA0/em4ocaM//veOtN2U64iBgMnQqNaMT2Yz47ME+CqhsEMK9fB1sQRGvbBQkPau524BhgfzOTeMAAAgAEAAIABAACAAQAAAAAAAAAiBgOBNAuSGpxrdusFO6c2aMixvhYSwWvJPB3cEf9k9LgqShjtAhDIMAAAgAEAAIABAACAAQAAAAAAAAAiBgPdbg/RGEZcyAU+sjVNkti/8LzgNP3puKHGjP/73jrTdhhg86CzMAAAgAEAAIABAACAAQAAAAAAAAAAAA==";
+
+    //Hot wallet 3-input P2WPKH PSBT (same vector as the third SignTest case)
+    private const string HotWalletPsbt =
+        "cHNidP8BAKQBAAAAAwXAGAr1uq/i06r+EW2SjFMKQp3Pg0q+eJcqQ9iWKLrMAAAAAAD/////E9fa5RGuwTHL6xLgYpdDDXz2piFg7F9UWPZXyAZdM8kAAAAAAP////9YszwapNpRRrI7LFJglswjr9SLkao+ywZq/AtjZMDChAAAAAAA/////wGsJgMGAAAAABYAFJO3OqgJq4Mr3qWsDV1YUNj0aDHQAAAAAE8BBDWHzwN9uUaNAAAAAIDetxqi8U7tfzci9EleGtB59Z/A84PlsnvZ229emSEgA6/rPqXCpw3EqihylkpeL/EXKvNGahv+0Dm2JmVJf8VGEO0CEMgwAACAAQAAgAAAAAAAAQEfjGkeAAAAAAAWABQCmza03sKejExNXjBVHR8UyJJWpgEDBAIAAAAiBgIUCFqogmf/kpcaV+42XlzRzx4OWdqxWDesHZkVuK70sBjtAhDIMAAAgAEAAIAAAAAAAAAAAD0AAAAAAQEfyFrXBQAAAAAWABR9cTsoys8smwP2qmjSQM06tKj4fwEDBAIAAAAiBgPzpHxMZtZ1f3rW4L0yyV4gPS45MGMDooXHpvIhAGbvtBjtAhDIMAAAgAEAAIAAAAAAAQAAAC8AAAAAAQEfMGYNAAAAAAAWABRmqBq5qDk2/37GDEq0zM5HXigXjwEDBAIAAAAiBgJr4vl26F2PI9F3JT63vX1qltyDoaAOZ/D212UNJ3u1XhjtAhDIMAAAgAEAAIAAAAAAAQAAADQAAAAAAA==";
+
+    /// <summary>
+    /// Rewrites the MF_ed0210c8 env var config with Compromised = true (safe: the ctor resets the
+    /// env var per test and xUnit does not parallelize within a class)
+    /// </summary>
+    private static void MarkSeedCompromised()
+    {
+        var configJson = Environment.GetEnvironmentVariable("MF_ed0210c8");
+        var config = JsonSerializer.Deserialize<SignPSBTConfig>(configJson ?? throw new InvalidOperationException());
+        config!.Compromised = true;
+        Environment.SetEnvironmentVariable("MF_ed0210c8", JsonSerializer.Serialize(config));
+    }
+
+    [Fact]
+    public async Task SignTest_CompromisedSeed_MultisigInputStillSigns()
     {
         //Arrange
         var function = new Function();
-        var context = new TestLambdaContext();
+        MarkSeedCompromised();
 
-        var mnemonicString =
-            "middle teach digital prefer fiscal theory syrup enter crash muffin easily anxiety ill barely eagle swim volume consider dynamic unaware deputy middle into physical";
+        var originalPSBT = PSBT.Parse(MultisigPsbt, Network.RegTest);
 
-        var keyId = awsKmsKeyId;
+        Func<RootedKeyPath?, Task<string?>> GetSeed = (_) => Task.FromResult("middle teach digital prefer fiscal theory syrup enter crash muffin easily anxiety ill barely eagle swim volume consider dynamic unaware deputy middle into physical");
+
         //Act
-        var result = await function.EncryptSeedphrase(mnemonicString, keyId);
-        var base64Decoding = Convert.FromBase64String(result);
-        //Assert
-        result.Should().NotBeEmpty();
+        var result = await function.SignPSBT(MultisigPsbt, "Regtest", SigHash.All, GetSeed);
 
-        base64Decoding.Should().NotBeEmpty();
+        //Assert
+        result.Should().NotBeNull();
+        var parsedPSBT = PSBT.Parse(result.Psbt ?? throw new InvalidOperationException(), Network.RegTest);
+        parsedPSBT.Inputs.Sum(x => x.PartialSigs.Count).Should()
+            .BeGreaterThan(originalPSBT.Inputs.Sum(x => x.PartialSigs.Count));
     }
+
+    [Fact]
+    public async Task SignTest_CompromisedSeed_RefusesSingleSigInput()
+    {
+        //Arrange
+        var function = new Function();
+        MarkSeedCompromised();
+
+        Func<RootedKeyPath?, Task<string?>> GetSeed = (_) => Task.FromResult("middle teach digital prefer fiscal theory syrup enter crash muffin easily anxiety ill barely eagle swim volume consider dynamic unaware deputy middle into physical");
+
+        //Act
+        var act = () => function.SignPSBT(HotWalletPsbt, "Regtest", SigHash.All, GetSeed);
+
+        //Assert
+        await act.Should().ThrowAsync<ArgumentException>()
+            .WithMessage("*is marked as compromised, refusing to sign the non-multisig input*");
+    }
+
+    [Fact]
+    public void SignPSBTConfig_CompromisedAbsentFromJson_DefaultsToFalse()
+    {
+        //Arrange: an env var value written before the Compromised flag existed
+        const string legacyConfigJson = "{\"EncryptedSeedphrase\":\"AQIC\",\"AwsKmsKeyId\":\"mrk-123\"}";
+
+        //Act
+        var config = JsonSerializer.Deserialize<SignPSBTConfig>(legacyConfigJson);
+
+        //Assert
+        config.Should().NotBeNull();
+        config!.Compromised.Should().BeFalse();
+    }
+
 
 
     [Fact]

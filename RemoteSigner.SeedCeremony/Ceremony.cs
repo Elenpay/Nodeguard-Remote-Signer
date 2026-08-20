@@ -56,7 +56,7 @@ public static class Ceremony
 
     /// <summary>
     /// Builds the MF_* env var value by serializing the lambda's own SignPSBTConfig DTO, so the
-    /// JSON shape/casing can never drift from what the lambda deserializes
+    /// JSON shape/casing can never drift from what Function.GetConfig deserializes
     /// </summary>
     /// <param name="encryptedSeedphraseBase64"></param>
     /// <param name="kmsKeyId"></param>
