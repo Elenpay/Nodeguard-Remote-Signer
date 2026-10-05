@@ -18,6 +18,14 @@
     <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="3.0.1" />
     <PackageReference Include="AWSSDK.Core" Version="4.0.101.1" />
     <PackageReference Include="AWSSDK.KeyManagementService" Version="4.0.100.9" />
-    <PackageReference Include="NBitcoin" Version="10.0.9" />
+    <PackageReference Include="NBitcoin" Version="10.0.10" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Spark signing (NSpark fork, git submodule). Only /spark/* requests reach it. -->
+    <ProjectReference Include="..\vendor\nspark\src\NSpark.RemoteSigner\NSpark.RemoteSigner.csproj" />
+  </ItemGroup>
+  <Target Name="RequireNSparkSubmodule" BeforeTargets="Restore;CollectPackageReferences">
+    <Error Condition="!Exists('$(MSBuildThisFileDirectory)..\vendor\nspark\src\NSpark.RemoteSigner\NSpark.RemoteSigner.csproj')"
+           Text="vendor/nspark is missing: run `git submodule update --init vendor/nspark`." />
+  </Target>
 </Project>

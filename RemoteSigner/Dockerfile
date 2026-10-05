@@ -1,22 +1,22 @@
+# Build context: the repository root (the NSpark fork lives in the vendor/nspark submodule).
+#   docker build -f RemoteSigner/Dockerfile .
 FROM --platform=linux/amd64 public.ecr.aws/lambda/dotnet:10 AS base
 
-FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:10.0 as build
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY ["RemoteSigner.csproj", "RemoteSigner/"]
-RUN dotnet restore "RemoteSigner/RemoteSigner.csproj"
+COPY ["RemoteSigner/RemoteSigner.csproj", "RemoteSigner/"]
+COPY ["vendor/nspark/", "vendor/nspark/"]
+RUN dotnet restore "RemoteSigner/RemoteSigner.csproj" --runtime linux-x64
 
-WORKDIR "/src/RemoteSigner"
-COPY . .
-RUN dotnet build "RemoteSigner.csproj" --configuration Release --output /app/build
-
-FROM build AS publish
-RUN dotnet publish "RemoteSigner.csproj" \
+COPY ["RemoteSigner/", "RemoteSigner/"]
+RUN dotnet publish "RemoteSigner/RemoteSigner.csproj" \
             --configuration Release \
             --runtime linux-x64 \
             --self-contained false \
+            --no-restore \
             --output /app/publish \
             -p:PublishReadyToRun=true
 
 FROM base AS final
 WORKDIR /var/task
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .

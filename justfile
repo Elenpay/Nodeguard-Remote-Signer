@@ -2,8 +2,9 @@
 set positional-arguments
 
 build-docker-image:
-    # Navigate to the RemoteSigner directory and build the Docker image
-    cd RemoteSigner && docker build -t 839166930136.dkr.ecr.eu-central-1.amazonaws.com/nodeguardremotesigner:latest .
+    # Build from the repository root: the image needs the vendor/nspark submodule
+    git submodule update --init vendor/nspark
+    docker build -f RemoteSigner/Dockerfile -t 839166930136.dkr.ecr.eu-central-1.amazonaws.com/nodeguardremotesigner:latest .
   
 push-docker-image:
     # Push the Docker image to the repository
