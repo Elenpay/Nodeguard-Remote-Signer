@@ -64,10 +64,19 @@ public class Function
     /// without AWS
     /// </summary>
     /// <param name="kmsClientFactory"></param>
-    public Function(Func<IAmazonKeyManagementService> kmsClientFactory)
+    public Function(Func<IAmazonKeyManagementService> kmsClientFactory) : this(kmsClientFactory, TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Also supplies the clock that expires the cached Spark keys
+    /// </summary>
+    /// <param name="kmsClientFactory"></param>
+    /// <param name="time"></param>
+    public Function(Func<IAmazonKeyManagementService> kmsClientFactory, TimeProvider time)
     {
         _kmsClientFactory = kmsClientFactory ?? throw new ArgumentNullException(nameof(kmsClientFactory));
-        _sparkRoute = new SparkRoute();
+        _sparkRoute = new SparkRoute(new SparkSeed(kmsClientFactory, time));
     }
 
     /// <summary>

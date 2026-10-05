@@ -76,8 +76,7 @@ public class RoutingTests : IDisposable
     [InlineData("/spark/info")]
     [InlineData("//spark/info")]
     [InlineData("/spark/identity-public-key")]
-    [InlineData("/spark/sign-leaf-frost")]
-    public async Task SparkPaths_NeverReachTheSeeds(string path)
+    public async Task SparkPaths_WithoutASparkSeed_NeverReachTheSeeds(string path)
     {
         var response = await Handle(path, """{"wallet":"ed0210c8"}""");
 
@@ -86,6 +85,20 @@ public class RoutingTests : IDisposable
         Envelope(response).Error.Should().Contain("not enabled");
         _kmsClientsCreated.Should().Be(0);
         _kms.DecryptCalls.Should().Be(0);
+    }
+
+    [Theory]
+    [InlineData("/spark/sign-leaf-frost")]
+    [InlineData("/spark/export-static-deposit-private-key")]
+    [InlineData("/spark/")]
+    [InlineData("/spark/info/extra")]
+    public async Task OperationsTheSignerDoesNotServe_Are404WithoutTouchingTheSeeds(string path)
+    {
+        var response = await Handle(path, """{"wallet":"ed0210c8"}""");
+
+        response.StatusCode.Should().Be(404);
+        Envelope(response).Error.Should().Contain("not served");
+        _kmsClientsCreated.Should().Be(0);
     }
 
     [Fact]
