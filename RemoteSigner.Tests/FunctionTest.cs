@@ -7,6 +7,7 @@ using NBitcoin;
 
 namespace RemoteSigner.Tests;
 
+[Collection(SignerEnvironment.Collection)]
 public class FunctionTest : IDisposable
 {
     private const string awsKmsKeyId = "mrk-51c7f523a83442718f2f71a986b7c7fb";
