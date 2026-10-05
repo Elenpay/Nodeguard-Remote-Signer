@@ -154,6 +154,69 @@ Example (json-like structure of key-value, `ed0210c8` is the master fingerprint 
 }}
 ```
 
+## Spark signing
+
+The same function also signs for NodeGuard's [Spark](https://www.spark.money/) wallet, which NodeGuard uses as a swap-out provider: it receives a Lightning payment on Spark and exits it on-chain to a NodeGuard wallet. Requests under `/spark/` follow the `NSpark.RemoteSigner` contract from the NSpark fork in [vendor/nspark](vendor/nspark/) (`docs/remote-signer.md` there). Every other path, including none, is the PSBT signer above, unchanged.
+
+Spark is off until `SPARK_SEED_FINGERPRINT` is set. Until then every `/spark/` request gets a 403.
+
+### Which seed signs for Spark
+
+Spark reuses one existing `MF_` seed, and only that one: `SPARK_SEED_FINGERPRINT` names it. The Spark keys are derived from it at `m/8797555'/{SPARK_ACCOUNT}'/…`, apart from the PSBT keys.
+
+- Requests for any other wallet are refused before KMS is called.
+- A seed marked `Compromised` is refused. Before marking the Spark seed compromised or rotating it, drain NodeGuard's Spark balance; the NodeGuard rotation runbook has the step.
+- The decrypted mnemonic must be valid BIP-39 and must reproduce its `MF_` fingerprint.
+- Only the derived Spark account keys are cached in memory, for `SPARK_SIGNER_CACHE_SECONDS`. The mnemonic and master key are not cached.
+
+Because this seed also signs PSBTs, a bug on the Spark path could reach it. The protections are the single allowlisted seed, the routing that sends only `/spark/` requests to Spark code, the policy below, and the NSpark native library rebuilt from Lightspark's source in the fork. NodeGuard also keeps Spark balances transit-only.
+
+### Operations and policy
+
+Served operations: `info`, `identity-public-key`, `sign-with-identity`, `sign-compact-with-identity`, `deposit-public-key`, `leaf-public-key`, `static-deposit-public-key`, `sign-leaf-frost`, `build-send-tweaks`, `build-claim-tweaks` and `build-preimage-shares`.
+
+Never served (404): ECIES decryption, private key export, two-phase FROST nonces and adaptor keys. Leaf signatures with an adaptor key are refused (403).
+
+| Variable | Required | Meaning |
+|---|---|---|
+| `SPARK_SEED_FINGERPRINT` | to enable Spark | Master fingerprint of the `MF_` seed that signs for Spark |
+| `SPARK_ACCOUNT` | yes | Spark account index. It must match NodeGuard's `SPARK_ACCOUNT` |
+| `SPARK_OPERATOR_KEYS` | yes | Comma-separated identity keys (compressed, hex) of the Spark operators. Key tweaks and preimage shares are only built for exactly this set. Without it, every tweak and share is refused |
+| `SPARK_THRESHOLD` | with operators | The operators' signing threshold (1 to the number of operators) |
+| `SPARK_ALLOWED_RECEIVERS` | yes | Comma-separated identity keys (compressed, hex) that leaves may be sent to: the SSP. The signer's own identity is always allowed |
+| `SPARK_SIGNER_CACHE_SECONDS` | no | How long derived Spark keys stay cached. Default 60; 0 disables |
+
+A malformed policy refuses every Spark request with a 500 before any seed is decrypted. `/spark/info` returns the identity and the policy, and NodeGuard checks both at startup against its own configuration.
+
+To get the identity NodeGuard pins as `SPARK_IDENTITY_PUBKEY`, run the ceremony's `verify` on the seed's manifest with the Spark account. It prints only public data:
+
+```bash
+dotnet run --project RemoteSigner.SeedCeremony -- verify --in manifest.json --spark-account 0
+```
+
+### Enabling Spark on a deployed function
+
+1. Raise the memory to 512 MB once: `just set-memory stg` (or `prod`).
+2. Add the `SPARK_*` variables with the snapshot → merge → apply flow above, merging a file instead of a manifest entry:
+
+   ```bash
+   jq --slurpfile s spark-env.json '{Variables: (. + $s[0])}' \
+     "env-$FN-$TS.json" > "env-$FN-merged.json"
+   ```
+
+   `spark-env.json` holds the `SPARK_*` keys. They add about 400 bytes, so check that `wc -c` stays under Lambda's 4 KB environment limit.
+3. Call `/spark/info` from NodeGuard (it does so at startup) and compare the identity with the ceremony's output.
+
+Spark and PSBT requests share the function's concurrency. NodeGuard sends its Spark requests one at a time, so they hold at most one execution. If the function has reserved concurrency, leave room for that plus PSBT signing.
+
+### Local smoke test
+
+```bash
+just spark-smoke-local
+```
+
+This builds the image and runs it under the Lambda runtime interface emulator with a throwaway [floci](https://hub.docker.com/r/floci/floci) KMS and the public dev seed (`ed0210c8`). It checks that `/spark/info` serves the dev seed's Spark identity and refuses other wallets, and that `/` still signs the golden PSBT byte-for-byte. It never touches AWS. It needs docker, the aws CLI, jq and dotnet.
+
 ## CI pipeline
 
 The project uses GitHub Actions for continuous integration. The workflow is defined in `.github/workflows/ci.yml` and triggers on three events:

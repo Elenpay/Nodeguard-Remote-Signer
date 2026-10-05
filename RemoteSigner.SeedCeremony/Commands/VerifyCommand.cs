@@ -6,6 +6,7 @@ namespace RemoteSigner.SeedCeremony.Commands;
 /// <summary>
 /// Preflight gate before touching the lambda: KMS-decrypts the manifest's env value through the
 /// lambda's own decrypt path and re-derives fingerprint + xpub, asserting everything matches.
+/// With --spark-account, also prints the Spark identity the signer will serve for the seed.
 /// Never prints the seed
 /// </summary>
 public static class VerifyCommand
@@ -13,6 +14,11 @@ public static class VerifyCommand
     public static async Task<int> Run(Options options)
     {
         var inPath = options.Require("--in");
+
+        var sparkAccountFlag = options.Get("--spark-account");
+        var sparkAccount = -1;
+        if (sparkAccountFlag != null && (!int.TryParse(sparkAccountFlag, out sparkAccount) || sparkAccount < 0))
+            throw new UsageException("--spark-account must be the signer's SPARK_ACCOUNT (0 or more)");
 
         var manifest = CeremonyManifest.FromJson(await File.ReadAllTextAsync(inPath));
 
@@ -55,6 +61,11 @@ public static class VerifyCommand
         }
 
         Console.WriteLine($"VERIFY OK: {manifest.EnvName} decrypts and re-derives fingerprint {manifest.MasterFingerprint} and xpub {manifest.AccountXpub} ({manifest.DerivationPath} on {manifest.Network})");
+
+        if (sparkAccountFlag != null)
+        {
+            Console.WriteLine($"Spark identity at SPARK_ACCOUNT={sparkAccount} (NodeGuard's SPARK_IDENTITY_PUBKEY): {Ceremony.SparkIdentityPublicKey(mnemonic, sparkAccount)}");
+        }
 
         return 0;
     }
