@@ -22,5 +22,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The request bodies NSpark's RemoteSparkSigner sends, pinned in the fork: the signer must parse every one -->
+    <None Include="..\vendor\nspark\tests\NSpark.RemoteSigner.Tests\Fixtures\*.json"
+          Link="ContractFixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

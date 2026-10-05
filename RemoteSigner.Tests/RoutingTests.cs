@@ -88,7 +88,7 @@ public class RoutingTests : IDisposable
     }
 
     [Theory]
-    [InlineData("/spark/sign-leaf-frost")]
+    [InlineData("/spark/generate-adaptor-key")]
     [InlineData("/spark/export-static-deposit-private-key")]
     [InlineData("/spark/")]
     [InlineData("/spark/info/extra")]
