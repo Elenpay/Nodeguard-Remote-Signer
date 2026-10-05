@@ -9,6 +9,7 @@ using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
 using Amazon.Runtime.CredentialManagement;
 using NBitcoin;
+using NSpark.RemoteSigner;
 
 [assembly:
     LambdaSerializer(typeof(SourceGeneratorLambdaJsonSerializer<RemoteSigner.HttpApiJsonSerializerContext>))]
@@ -48,8 +49,30 @@ public class SignPSBTConfig
 
 public class Function
 {
+    private readonly Func<IAmazonKeyManagementService> _kmsClientFactory;
+    private readonly SparkRoute _sparkRoute;
+
     /// <summary>
-    /// A lambda function that takes a psbt and signs it, it it assumed that the psbt inputs come from the same wallet
+    /// Lambda entry point: KMS clients come from the default AWS credential chain
+    /// </summary>
+    public Function() : this(CreateKmsClient)
+    {
+    }
+
+    /// <summary>
+    /// Supplies the KMS client the seeds are decrypted with, so tests can run the whole handler
+    /// without AWS
+    /// </summary>
+    /// <param name="kmsClientFactory"></param>
+    public Function(Func<IAmazonKeyManagementService> kmsClientFactory)
+    {
+        _kmsClientFactory = kmsClientFactory ?? throw new ArgumentNullException(nameof(kmsClientFactory));
+        _sparkRoute = new SparkRoute();
+    }
+
+    /// <summary>
+    /// A lambda function that takes a psbt and signs it, it it assumed that the psbt inputs come from the same wallet.
+    /// Requests under /spark/ go to the Spark signer instead; every other path, including none, is the PSBT signer
     /// </summary>MF
     /// <param name="request"></param>
     /// <param name="context"></param>
@@ -57,6 +80,11 @@ public class Function
     public async Task<APIGatewayHttpApiV2ProxyResponse> FunctionHandler(APIGatewayHttpApiV2ProxyRequest request,
         ILambdaContext context)
     {
+        if (SparkSignerHttpHandler.IsSparkPath(request.RawPath))
+        {
+            return await _sparkRoute.HandleAsync(request);
+        }
+
         var response = new APIGatewayHttpApiV2ProxyResponse();
 
         try
@@ -64,14 +92,7 @@ public class Function
             var requestBody = JsonSerializer.Deserialize<SignPSBTRequest>(request.Body);
             if (requestBody == null) throw new ArgumentNullException(nameof(requestBody), "Request body not found");
 
-#if DEBUG
-            //AWS SDK v4 removed StoredProfileAWSCredentials; resolve the "default" profile explicitly
-            if (!new CredentialProfileStoreChain().TryGetAWSCredentials("default", out var debugCredentials))
-                throw new InvalidOperationException("AWS profile 'default' was not found");
-            var kmsClient = new AmazonKeyManagementServiceClient(debugCredentials, RegionEndpoint.EUCentral1);
-#else
-            var kmsClient = new AmazonKeyManagementServiceClient();
-#endif
+            var kmsClient = _kmsClientFactory();
 
             Task<string> GetSeed(RootedKeyPath derivationPath) => DecryptSeed(kmsClient, derivationPath);
             var result = await SignPSBT(requestBody.Psbt, requestBody.Network, requestBody.EnforcedSighash, GetSeed);
@@ -253,7 +274,19 @@ public class Function
         }
     }
 
-    private static async Task<string?> DecryptSeed(AmazonKeyManagementServiceClient kmsClient, RootedKeyPath? derivationPath)
+    private static IAmazonKeyManagementService CreateKmsClient()
+    {
+#if DEBUG
+        //AWS SDK v4 removed StoredProfileAWSCredentials; resolve the "default" profile explicitly
+        if (!new CredentialProfileStoreChain().TryGetAWSCredentials("default", out var debugCredentials))
+            throw new InvalidOperationException("AWS profile 'default' was not found");
+        return new AmazonKeyManagementServiceClient(debugCredentials, RegionEndpoint.EUCentral1);
+#else
+        return new AmazonKeyManagementServiceClient();
+#endif
+    }
+
+    private static async Task<string?> DecryptSeed(IAmazonKeyManagementService kmsClient, RootedKeyPath? derivationPath)
     {
         var config = GetConfig(derivationPath.MasterFingerprint);
 
