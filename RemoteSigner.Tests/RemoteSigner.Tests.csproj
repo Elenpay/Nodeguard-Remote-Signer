@@ -20,4 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\RemoteSigner\RemoteSigner.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

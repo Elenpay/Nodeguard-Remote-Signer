@@ -1,0 +1,13 @@
+# Docker build context is the repository root (see RemoteSigner/Dockerfile).
+**/.git
+**/.github
+**/bin
+**/obj
+**/.DS_Store
+**/*.user
+RemoteSigner.Tests/
+RemoteSigner.SeedCeremony/
+vendor/nspark/tests/
+vendor/nspark/samples/
+vendor/nspark/benchmarks/
+vendor/nspark/docs/
