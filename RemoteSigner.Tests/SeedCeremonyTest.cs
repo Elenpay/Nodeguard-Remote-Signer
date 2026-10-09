@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.Json;
 using Amazon.KeyManagementService;
 using Amazon.KeyManagementService.Model;
-using Amazon.Runtime;
 using FluentAssertions;
 using NBitcoin;
 using RemoteSigner.SeedCeremony;
@@ -17,41 +16,6 @@ public class SeedCeremonyTest
     /// </summary>
     private const string DevMnemonic =
         "middle teach digital prefer fiscal theory syrup enter crash muffin easily anxiety ill barely eagle swim volume consider dynamic unaware deputy middle into physical";
-
-    /// <summary>
-    /// Fake KMS whose Encrypt/Decrypt are identity transforms, capturing requests, so the whole
-    /// encrypt -> decrypt -> re-derive pipeline runs without AWS credentials
-    /// </summary>
-    private class FakeKmsClient : AmazonKeyManagementServiceClient
-    {
-        public EncryptRequest? LastEncryptRequest;
-        public DecryptRequest? LastDecryptRequest;
-
-        public FakeKmsClient() : base(new AnonymousAWSCredentials(),
-            new AmazonKeyManagementServiceConfig { RegionEndpoint = Amazon.RegionEndpoint.EUCentral1 })
-        {
-        }
-
-        public override Task<EncryptResponse> EncryptAsync(EncryptRequest request,
-            CancellationToken cancellationToken = default)
-        {
-            LastEncryptRequest = request;
-            return Task.FromResult(new EncryptResponse
-            {
-                CiphertextBlob = new MemoryStream(request.Plaintext.ToArray())
-            });
-        }
-
-        public override Task<DecryptResponse> DecryptAsync(DecryptRequest request,
-            CancellationToken cancellationToken = default)
-        {
-            LastDecryptRequest = request;
-            return Task.FromResult(new DecryptResponse
-            {
-                Plaintext = new MemoryStream(request.CiphertextBlob.ToArray())
-            });
-        }
-    }
 
     [Theory]
     [InlineData("regtest", "tpub")]
