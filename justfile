@@ -23,6 +23,11 @@ deploy-no-cli env='stg': build-docker-image push-docker-image
     # Update the AWS Lambda function code without using Gum
     aws lambda update-function-code --no-paginate --function-name arn:aws:lambda:eu-central-1:839166930136:function:SignPSBT-{{env}} --image-uri 839166930136.dkr.ecr.eu-central-1.amazonaws.com/nodeguardremotesigner:latest --publish
 
+# One-off: give the function the memory its Spark routes need (FROST signing, NSpark libraries)
+set-memory env='stg' size='512':
+    aws lambda update-function-configuration --no-paginate --function-name arn:aws:lambda:eu-central-1:839166930136:function:SignPSBT-{{env}} --memory-size {{size}}
+    aws lambda wait function-updated-v2 --function-name arn:aws:lambda:eu-central-1:839166930136:function:SignPSBT-{{env}}
+
 # Seed ceremony: generate a NEW 24-word seed, KMS-encrypt it and write the manifest (interactive terminal required)
 ceremony-generate kms_key_id network='mainnet' out='manifest.json':
     dotnet run --project RemoteSigner.SeedCeremony -- generate --kms-key-id {{kms_key_id}} --network {{network}} --out {{out}}
@@ -51,3 +56,9 @@ ceremony-test-local endpoint='http://localhost:4566':
     dotnet run --project RemoteSigner.SeedCeremony -- verify --in "$MANIFEST"
     grep -q '"MF_ed0210c8"' "$MANIFEST"
     echo "Local emulator ceremony smoke test OK (fingerprint ed0210c8 round-tripped)"
+
+# Smoke-test the real image locally, never touching AWS: the Lambda runtime interface emulator with a
+# throwaway floci KMS and the PUBLIC dev vector (ed0210c8) as the Spark seed. Checks /spark/info
+# serves the dev Spark identity and / still signs the golden PSBT byte-for-byte.
+spark-smoke-local floci='floci/floci:1.5.25':
+    scripts/spark-smoke-local.sh {{floci}}

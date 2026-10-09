@@ -24,10 +24,11 @@ const string usage = """
           Same for an EXISTING mnemonic, read from --seed-file or a hidden prompt.
           The mnemonic is never accepted as a command-line argument.
 
-      seed-ceremony verify   --in <manifest.json> [--xpub <expected>]
+      seed-ceremony verify   --in <manifest.json> [--xpub <expected>] [--spark-account <n>]
                              [--profile <p>] [--region <r>]
           Preflight gate: KMS-decrypt the manifest's env value and check that the
           fingerprint, env var name and account xpub all re-derive identically.
+          With --spark-account, also print the seed's Spark identity at that account.
 
     Exit codes: 0 ok, 1 verification/derivation failure, 2 usage error, 3 AWS/KMS error.
     AWS credentials come from the default chain (env vars, profiles, SSO) — never from flags.
@@ -57,7 +58,7 @@ try
         "encrypt" => await EncryptCommand.Run(Options.Parse(commandArgs,
             "--kms-key-id", "--network", "--derivation-path", "--seed-file", "--out", "--output", "--profile", "--region")),
         "verify" => await VerifyCommand.Run(Options.Parse(commandArgs,
-            "--in", "--xpub", "--profile", "--region")),
+            "--in", "--xpub", "--spark-account", "--profile", "--region")),
         _ => throw new UsageException($"Unknown command '{command}'")
     };
 }

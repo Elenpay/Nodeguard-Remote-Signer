@@ -4,6 +4,7 @@ using Amazon.KeyManagementService;
 using Amazon.KeyManagementService.Model;
 using FluentAssertions;
 using NBitcoin;
+using NSpark.Signer;
 using RemoteSigner.SeedCeremony;
 using Xunit;
 
@@ -16,6 +17,17 @@ public class SeedCeremonyTest
     /// </summary>
     private const string DevMnemonic =
         "middle teach digital prefer fiscal theory syrup enter crash muffin easily anxiety ill barely eagle swim volume consider dynamic unaware deputy middle into physical";
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public async Task SparkIdentityPublicKey_IsTheIdentityTheSignerServes(int account)
+    {
+        var served = await SparkSigner.FromMnemonic(DevMnemonic, account).GetIdentityPublicKeyAsync();
+
+        Ceremony.SparkIdentityPublicKey(new Mnemonic(DevMnemonic), account).Should()
+            .Be(Convert.ToHexString(served).ToLowerInvariant());
+    }
 
     [Theory]
     [InlineData("regtest", "tpub")]

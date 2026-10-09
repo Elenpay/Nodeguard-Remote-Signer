@@ -47,6 +47,20 @@ public static class Ceremony
         return new CeremonyResult(masterFingerprint, accountXpub, $"MF_{masterFingerprint}");
     }
 
+    /// <summary>
+    /// The Spark identity public key (hex) the remote signer serves for this seed at a Spark account:
+    /// the key at m/8797555'/{account}'/0', as NSpark and the Spark SDKs derive it. NodeGuard pins it
+    /// as SPARK_IDENTITY_PUBKEY. NBitcoin only, so the ceremony does not load the Spark libraries
+    /// </summary>
+    /// <param name="mnemonic"></param>
+    /// <param name="account">The signer's SPARK_ACCOUNT</param>
+    public static string SparkIdentityPublicKey(Mnemonic mnemonic, int account)
+    {
+        if (account < 0) throw new ArgumentOutOfRangeException(nameof(account), "The Spark account must be 0 or more");
+
+        return mnemonic.DeriveExtKey().Derive(KeyPath.Parse($"m/8797555'/{account}'/0'")).GetPublicKey().ToHex();
+    }
+
     //Relaxed escaping keeps base64 plus signs literal instead of the default encoder's u002B
     //unicode escapes; JSON parsers decode both identically
     private static readonly JsonSerializerOptions EnvValueSerializerOptions = new()
