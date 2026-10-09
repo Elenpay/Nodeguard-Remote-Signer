@@ -156,7 +156,7 @@ Example (json-like structure of key-value, `ed0210c8` is the master fingerprint 
 
 ## Spark signing
 
-The same function also signs for NodeGuard's [Spark](https://www.spark.money/) wallet, which NodeGuard uses as a swap-out provider: it receives a Lightning payment on Spark and exits it on-chain to a NodeGuard wallet. Requests under `/spark/` follow the `NSpark.RemoteSigner` contract from the NSpark fork in [vendor/nspark](vendor/nspark/) (`docs/remote-signer.md` there). Every other path, including none, is the PSBT signer above, unchanged.
+The same function also signs for NodeGuard's [Spark](https://www.spark.money/) wallet, which NodeGuard uses as a swap-out provider: it receives a Lightning payment on Spark and exits it on-chain to a NodeGuard wallet. Requests under `/spark/` follow the `NSpark.RemoteSigner` contract from NSpark ([orklabs/nspark](https://github.com/orklabs/nspark), in [vendor/nspark](vendor/nspark/)) (`docs/remote-signer.md` there). Every other path, including none, is the PSBT signer above, unchanged.
 
 Spark is off until `SPARK_SEED_FINGERPRINT` is set. Until then every `/spark/` request gets a 403.
 
@@ -169,7 +169,7 @@ Spark reuses one existing `MF_` seed, and only that one: `SPARK_SEED_FINGERPRINT
 - The decrypted mnemonic must be valid BIP-39 and must reproduce its `MF_` fingerprint.
 - Only the derived Spark account keys are cached in memory, for `SPARK_SIGNER_CACHE_SECONDS`. The mnemonic and master key are not cached.
 
-Because this seed also signs PSBTs, a bug on the Spark path could reach it. The protections are the single allowlisted seed, the routing that sends only `/spark/` requests to Spark code, the policy below, and the NSpark native library rebuilt from Lightspark's source in the fork. NodeGuard also keeps Spark balances transit-only.
+Because this seed also signs PSBTs, a bug on the Spark path could reach it. The protections are the single allowlisted seed, the routing that sends only `/spark/` requests to Spark code, the policy below, and the NSpark native library rebuilt from Lightspark's source. NodeGuard also keeps Spark balances transit-only.
 
 ### Operations and policy
 
@@ -180,7 +180,7 @@ Never served (404): ECIES decryption, private key export, two-phase FROST nonces
 | Variable | Required | Meaning |
 |---|---|---|
 | `SPARK_SEED_FINGERPRINT` | to enable Spark | Master fingerprint of the `MF_` seed that signs for Spark |
-| `SPARK_ACCOUNT` | yes | Spark account index. It must match NodeGuard's `SPARK_ACCOUNT` |
+| `SPARK_ACCOUNT` | no | Spark account index, `0` by default. It must match NodeGuard's `SPARK_ACCOUNT` |
 | `SPARK_OPERATOR_KEYS` | yes | Comma-separated identity keys (compressed, hex) of the Spark operators. Key tweaks and preimage shares are only built for exactly this set. Without it, every tweak and share is refused |
 | `SPARK_THRESHOLD` | with operators | The operators' signing threshold (1 to the number of operators) |
 | `SPARK_ALLOWED_RECEIVERS` | yes | Comma-separated identity keys (compressed, hex) that leaves may be sent to: the SSP. The signer's own identity is always allowed |
