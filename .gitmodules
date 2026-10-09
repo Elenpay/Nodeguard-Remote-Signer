@@ -1,4 +1,4 @@
 [submodule "vendor/nspark"]
 	path = vendor/nspark
-	url = https://github.com/Elenpay/nspark.git
+	url = https://github.com/orklabs/nspark.git
 	branch = main

@@ -1,4 +1,4 @@
-# Build context: the repository root (the NSpark fork lives in the vendor/nspark submodule).
+# Build context: the repository root (NSpark lives in the vendor/nspark submodule).
 #   docker build -f RemoteSigner/Dockerfile .
 FROM --platform=linux/amd64 public.ecr.aws/lambda/dotnet:10 AS base
 
