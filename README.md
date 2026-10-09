@@ -156,7 +156,7 @@ Example (json-like structure of key-value, `ed0210c8` is the master fingerprint 
 
 ## Spark signing
 
-The same function also signs for NodeGuard's [Spark](https://www.spark.money/) wallet, which NodeGuard uses as a swap-out provider: it receives a Lightning payment on Spark and exits it on-chain to a NodeGuard wallet. Requests under `/spark/` follow the `NSpark.RemoteSigner` contract from NSpark ([orklabs/nspark](https://github.com/orklabs/nspark), in [vendor/nspark](vendor/nspark/)) (`docs/remote-signer.md` there). Every other path, including none, is the PSBT signer above, unchanged.
+The same function also signs for NodeGuard's [Spark](https://www.spark.money/) wallet, which NodeGuard uses as a swap-out provider: it receives a Lightning payment on Spark and exits it on-chain to a NodeGuard wallet. Requests under `/spark/` follow the `NSpark.RemoteSigner` contract from NSpark (the [Elenpay/nspark](https://github.com/Elenpay/nspark) fork of [orklabs/nspark](https://github.com/orklabs/nspark), in [vendor/nspark](vendor/nspark/)) (`docs/remote-signer.md` there). Every other path, including none, is the PSBT signer above, unchanged.
 
 Spark is off until `SPARK_SEED_FINGERPRINT` is set. Until then every `/spark/` request gets a 403.
 
