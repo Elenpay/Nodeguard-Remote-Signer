@@ -174,9 +174,21 @@ public class SparkSeedTests : IDisposable
     [Theory]
     [InlineData(null)]
     [InlineData("")]
+    public async Task WithoutASparkAccount_AccountZeroIsUsed(string? account)
+    {
+        Environment.SetEnvironmentVariable(SparkSeed.AccountVariable, account);
+
+        var (status, envelope) = await Spark("info", "ed0210c8");
+
+        status.Should().Be(200);
+        envelope.Result!.Value.Deserialize<SparkSignerInfo>(SparkSignerContract.Json)!.IdentityPublicKey
+            .Should().Be(DevIdentityAccount0);
+    }
+
+    [Theory]
     [InlineData("-1")]
     [InlineData("one")]
-    public async Task TheSparkAccount_MustBeSetExplicitly(string? account)
+    public async Task AnInvalidSparkAccount_IsAConfigurationError(string? account)
     {
         Environment.SetEnvironmentVariable(SparkSeed.AccountVariable, account);
 

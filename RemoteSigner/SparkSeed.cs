@@ -7,7 +7,7 @@ namespace RemoteSigner;
 
 /// <summary>
 /// Selects and loads the one seed allowed to sign for Spark: the MF_ seed named by
-/// SPARK_SEED_FINGERPRINT, at the SPARK_ACCOUNT Spark account. Any other wallet, and a seed marked
+/// SPARK_SEED_FINGERPRINT, at the SPARK_ACCOUNT Spark account (0 by default). Any other wallet, and a seed marked
 /// Compromised, is refused. Only the derived Spark account keys are cached, for
 /// SPARK_SIGNER_CACHE_SECONDS (60 by default, 0 disables); the mnemonic is never kept
 /// </summary>
@@ -122,9 +122,11 @@ public class SparkSeed
             : throw new InvalidOperationException($"{FingerprintVariable} is not a master fingerprint (8 hex characters)");
 
     private static int ParseAccount(string? value) =>
-        int.TryParse(value, out var account) && account >= 0
-            ? account
-            : throw new InvalidOperationException($"{AccountVariable} must be set to the Spark account index (0 or more)");
+        string.IsNullOrWhiteSpace(value)
+            ? 0
+            : int.TryParse(value, out var account) && account >= 0
+                ? account
+                : throw new InvalidOperationException($"{AccountVariable} must be the Spark account index (0 or more)");
 
     private static int ParseCacheSeconds(string? value) =>
         string.IsNullOrWhiteSpace(value)
