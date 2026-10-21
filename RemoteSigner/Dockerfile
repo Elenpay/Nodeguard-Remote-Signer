@@ -18,5 +18,12 @@ RUN dotnet publish "RemoteSigner.csproj" \
             -p:PublishReadyToRun=true
 
 FROM base AS final
+
+# The eMudhra intermediates compromised in October 2026 chain to this root, and AL2023 has not shipped a ca-certificates release without it yet
+RUN dnf -y upgrade ca-certificates \
+    && awk '/^# emSign ECC Root CA - G3$/{f=1} f&&/BEGIN CERTIFICATE/{p=1} p{print} p&&/END CERTIFICATE/{exit}' /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem > /etc/pki/ca-trust/source/blocklist/emsign-ecc-root-ca-g3.pem \
+    && update-ca-trust extract \
+    && dnf clean all
+
 WORKDIR /var/task
 COPY --from=publish /app/publish .
