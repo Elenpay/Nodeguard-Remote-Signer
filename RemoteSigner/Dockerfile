@@ -1,4 +1,12 @@
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/aspnet:10.0.14 AS runtime
+
 FROM --platform=linux/amd64 public.ecr.aws/lambda/dotnet:10 AS base
+# The Lambda base image still ships .NET 10.0.13, vulnerable to CVE-2026-111497 (Brotli decoder).
+# Swap in the patched 10.0.14 runtime; drop this once the base image ships 10.0.14 or later.
+RUN rm -rf /var/lang/bin/shared/Microsoft.NETCore.App/10.0.13 /var/lang/bin/shared/Microsoft.AspNetCore.App/10.0.13
+COPY --from=runtime /usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.14 /var/lang/bin/shared/Microsoft.NETCore.App/10.0.14
+COPY --from=runtime /usr/share/dotnet/shared/Microsoft.AspNetCore.App/10.0.14 /var/lang/bin/shared/Microsoft.AspNetCore.App/10.0.14
+ENV DOTNET_VERSION=10.0.14
 
 FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:10.0 as build
 WORKDIR /src
